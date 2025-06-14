@@ -27,7 +27,7 @@ USER mcpuser
 
 # Set up Python path and virtual environment
 ENV PATH="/home/mcpuser/.local/bin:$PATH"
-ENV PYTHONPATH="/app:$PYTHONPATH"
+# ENV PYTHONPATH="/app:$PYTHONPATH"
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PIP_NO_CACHE_DIR=1
@@ -42,15 +42,14 @@ RUN pip install --user --no-cache-dir -r requirements.txt
 # Copy application code
 COPY --chown=mcpuser:mcpuser ce_mcp_server.py .
 COPY --chown=mcpuser:mcpuser utils.py .
-COPY --chown=mcpuser:mcpuser ce_mcp_server_v2.py .
 
 # Add health check script
-COPY --chown=mcpuser:mcpuser healthcheck.py . 
+COPY --chown=mcpuser:mcpuser healthcheck.py .
 
 # Set environment variables
 ENV MCP_SERVER_NAME="ibm-code-engine-mcp"
 ENV LOG_LEVEL="INFO"
-ENV MCP_SERVER_FILE="ce_mcp_server_v2.py"
+ENV MCP_SERVER_FILE="ce_mcp_server.py"
 
 # Add health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
@@ -63,5 +62,3 @@ ENTRYPOINT ["sh", "-c", "python -u ${MCP_SERVER_FILE}"]
 
 # Add signal handlers for graceful shutdown
 STOPSIGNAL SIGTERM
-
-

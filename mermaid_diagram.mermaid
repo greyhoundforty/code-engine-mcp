@@ -1,0 +1,57 @@
+flowchart TB
+    subgraph Claude["Claude Interface"]
+        user[User]
+        claude[Claude AI]
+    end
+
+    subgraph MCP["MCP Server"]
+        server["MCP Server\n(ce_mcp_server_v2.py)"]
+        tools["Tool Handlers\n- list_projects\n- list_applications\n- get_application"]
+        utils["Utilities\n(utils.py)"]
+    end
+
+    subgraph IBM["IBM Cloud"]
+        iam["IAM Service"]
+        ce["Code Engine API"]
+        subgraph Resources["Code Engine Resources"]
+            projects["Projects"]
+            apps["Applications"]
+            revisions["Revisions"]
+            domains["Domain Mappings"]
+            secrets["Secrets"]
+        end
+    end
+
+    %% Connections
+    user <--> claude
+    claude <--> server
+    server <--> tools
+    tools <--> utils
+    utils <--> iam
+    iam -- "Authenticates" --> ce
+    utils <--> ce
+    ce <--> Resources
+
+    %% Component Details
+    classDef claudeClass fill:#f9f,stroke:#333,stroke-width:2px
+    classDef mcpClass fill:#bbf,stroke:#333,stroke-width:2px
+    classDef ibmClass fill:#bfb,stroke:#333,stroke-width:2px
+    classDef resourceClass fill:#dfd,stroke:#333,stroke-width:1px
+
+    class Claude claudeClass
+    class MCP mcpClass
+    class IBM ibmClass
+    class Resources resourceClass
+
+    %% Data Flow Annotations
+    user -- "1. Requests\nCode Engine info" --> claude
+    claude -- "2. Tool call\nrequests" --> server
+    server -- "3. Delegates to\nappropriate handler" --> tools
+    tools -- "4. Uses client\nfunctions" --> utils
+    utils -- "5. Authenticates\nwith API key" --> iam
+    utils -- "6. Makes API\nrequests" --> ce
+    ce -- "7. Returns\nresource data" --> utils
+    utils -- "8. Processes\nresponse" --> tools
+    tools -- "9. Formats\nresponse" --> server
+    server -- "10. Returns\nstructured data" --> claude
+    claude -- "11. Presents\nresults" --> user

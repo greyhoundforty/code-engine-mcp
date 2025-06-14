@@ -8,6 +8,7 @@ PROJECT_NAME = "{{ config_root | basename }}"
 PREFIX = "{{ env.PROJECT_NAME }}"
 DOCKER_IMAGE = "{{ env.PREFIX }}"
 CONTAINER_NAME = "{{ env.PREFIX }}-container"
+DOCKER_TAG = "1.0"
 
 [tasks."uv:reqs"]
 description = "Install dependencies from requirements file"
@@ -72,7 +73,7 @@ description = "Run all code quality checks"
 depends = ["format:check", "lint", "typecheck", "security"]
 run = "echo '✅ All quality checks passed!'"
 
-# Testing Tasks  
+# Testing Tasks
 [tasks.test]
 description = "Run tests"
 run = "pytest tests/ -v"
@@ -97,144 +98,12 @@ echo "🧪 Testing MCP library..."
 python test_mcp_imports.py
 '''
 
-[tasks."test:server:v2"]
-description = "Test alternative MCP server implementation"
-alias = "ts2"
+[tasks."run:server"]
+description = "Run the MCP server"
+alias = "rs"
 run = '''
-echo "🧪 Testing alternative MCP server..."
-python -c "
-try:
-    from ce_mcp_server_v2 import server, main
-    print('✅ Alternative MCP server imports successfully')
-except Exception as e:
-    print(f'❌ Alternative MCP server import failed: {e}')
-    import traceback
-    traceback.print_exc()
-    exit(1)
-"
-'''
-
-[tasks."test:server:v3"]
-description = "Test minimal MCP server implementation (without InitializationOptions)"
-alias = "ts3"
-run = '''
-echo "🧪 Testing minimal MCP server..."
-python -c "
-try:
-    from ce_mcp_server_v3 import server, main
-    print('✅ Minimal MCP server imports successfully')
-except Exception as e:
-    print(f'❌ Minimal MCP server import failed: {e}')
-    import traceback
-    traceback.print_exc()
-    exit(1)
-"
-'''
-
-[tasks."test:servers"]
-description = "Test all MCP server versions quickly"
-alias = "tservers"
-run = '''
-echo "🧪 Testing all MCP server versions..."
-
-echo "📋 Testing imports for all servers..."
-python -c "
-results = []
-
-print('  Testing ce_mcp_server.py...')
-try:
-    from ce_mcp_server import server, main
-    results.append(('Original', '✅'))
-except Exception as e:
-    results.append(('Original', f'❌ {e}'))
-
-print('  Testing ce_mcp_server_v2.py...')
-try:
-    from ce_mcp_server_v2 import server, main
-    results.append(('V2 Alternative', '✅'))
-except Exception as e:
-    results.append(('V2 Alternative', f'❌ {e}'))
-
-print('  Testing ce_mcp_server_v3.py...')
-try:
-    from ce_mcp_server_v3 import server, main
-    results.append(('V3 Minimal', '✅'))
-except Exception as e:
-    results.append(('V3 Minimal', f'❌ {e}'))
-
-print('\n📝 Results Summary:')
-for name, result in results:
-    print(f'  {name}: {result}')
-
-working_count = sum(1 for _, result in results if result == '✅')
-print(f'\n🎯 {working_count}/3 server versions working')
-
-if working_count > 0:
-    print('\n💡 Recommended order to try:')
-    if any('V3 Minimal' in name and result == '✅' for name, result in results):
-        print('  1. ce_mcp_server_v3.py (minimal, most likely to work)')
-    if any('V2 Alternative' in name and result == '✅' for name, result in results):
-        print('  2. ce_mcp_server_v2.py (alternative approach)')
-    if any('Original' in name and result == '✅' for name, result in results):
-        print('  3. ce_mcp_server.py (original implementation)')
-"
-'''
-
-[tasks."test:init"]
-description = "Test InitializationOptions fix"
-alias = "ti"
-run = '''
-echo "🧪 Testing InitializationOptions fix..."
-python test_init_options.py
-'''
-
-[tasks."run:best"]
-description = "Run the best working MCP server version"
-alias = "rb"
-run = '''
-echo "🚀 Finding and running the best MCP server version..."
-
-echo "📋 Testing which servers work..."
-python -c "
-import sys
-
-# Test servers in order of preference
-servers = [
-    ('ce_mcp_server_v3.py', 'V3 Minimal'),
-    ('ce_mcp_server_v2.py', 'V2 Alternative'), 
-    ('ce_mcp_server.py', 'V1 Original')
-]
-
-working_server = None
-
-for filename, name in servers:
-    try:
-        module_name = filename.replace('.py', '')
-        module = __import__(module_name)
-        print(f'  ✅ {name} ({filename}) - imports successfully')
-        if working_server is None:
-            working_server = filename
-    except Exception as e:
-        print(f'  ❌ {name} ({filename}) - import failed: {e}')
-
-if working_server:
-    print(f'\n🎯 Best server: {working_server}')
-    print(f'📝 Starting {working_server}...')
-    sys.exit(0)
-else:
-    print('\n❌ No working servers found!')
-    sys.exit(1)
-"
-
-# Get the result and run the best server
-if [ $? -eq 0 ]; then
-  # For now, default to v3 since our test above doesn't actually run them
-  echo "🚀 Starting ce_mcp_server_v3.py (with InitializationOptions fix)..."
-  python ce_mcp_server_v3.py
-else
-  echo "❌ Could not determine best server to run"
-  exit 1
-fi
+echo "🚀 Starting MCP server..."
+python ce_mcp_server_v2.py
 '''
 
 # Docker Tasks
@@ -379,7 +248,7 @@ run = '''
 echo "🎯 Pre-release checks completed!"
 echo "📋 Summary:"
 echo "  ✅ Code quality checks passed"
-echo "  ✅ Tests passed" 
+echo "  ✅ Tests passed"
 echo "  ✅ Docker image built successfully"
 '''
 

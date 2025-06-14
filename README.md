@@ -6,7 +6,7 @@ A Modular Content Processing (MCP) server for interacting with IBM Code Engine r
 
 This MCP server enables Claude to directly interact with IBM Code Engine services by providing a set of tools for listing projects, applications, and viewing detailed information about your Code Engine resources. The server is designed to be run as a standalone service or in a Docker container.
 
-![MCP Server Architecture](docs/architecture.png)
+![MCP Server Architecture](code-engine-mcp.png)
 
 ## Installation
 

@@ -1,13 +1,13 @@
-flowchart TB
+flowchart LR
     subgraph Claude["Claude Interface"]
-        user[User]
-        claude[Claude AI]
+        user["User"]
+        claude["Claude AI"]
     end
 
     subgraph MCP["MCP Server"]
-        server["MCP Server\n(ce_mcp_server_v2.py)"]
-        tools["Tool Handlers\n- list_projects\n- list_applications\n- get_application"]
-        utils["Utilities\n(utils.py)"]
+        server["MCP Server (ce_mcp_server.py)"]
+        tools["Tool Handlers"]
+        utils["Utilities (utils.py)"]
     end
 
     subgraph IBM["IBM Cloud"]
@@ -42,16 +42,3 @@ flowchart TB
     class MCP mcpClass
     class IBM ibmClass
     class Resources resourceClass
-
-    %% Data Flow Annotations
-    user -- "1. Requests\nCode Engine info" --> claude
-    claude -- "2. Tool call\nrequests" --> server
-    server -- "3. Delegates to\nappropriate handler" --> tools
-    tools -- "4. Uses client\nfunctions" --> utils
-    utils -- "5. Authenticates\nwith API key" --> iam
-    utils -- "6. Makes API\nrequests" --> ce
-    ce -- "7. Returns\nresource data" --> utils
-    utils -- "8. Processes\nresponse" --> tools
-    tools -- "9. Formats\nresponse" --> server
-    server -- "10. Returns\nstructured data" --> claude
-    claude -- "11. Presents\nresults" --> user

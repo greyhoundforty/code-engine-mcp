@@ -19,19 +19,35 @@ jobs:
           tags: tag:github-actions
           hostname: github-actions-runner
 
-      - name: Test Tailscale Connection
+      - name: Diagnose Network Connectivity
         run: |
           # Display Tailscale IP
           echo "My Tailscale IP is: $(tailscale ip -4)"
 
-          # Ping your webhook server to test connectivity
-          # ping -c 4 100.70.24.24
+          # Check if Tailscale is running
+          tailscale status
 
-          # Test webhook (replace with your actual webhook endpoint)
-          curl -X POST \
-            http://100.70.24.24:8000/deploy \
-            -H "Content-Type: application/json" \
-            -d '{"test": "connectivity", "source": "github-actions"}'
+          # Show the routing table
+          ip route
 
-          # Keep Tailscale connection active for a bit to see logs
-          sleep 10
+          # Try pinging your webhook server
+          #ping -c 4 100.70.24.24
+
+          # Verbose curl to see where it's failing
+          curl -v http://100.70.24.24:8000/health
+
+      # - name: Test Tailscale Connection
+      #   run: |
+      #     # Display Tailscale IP
+      #     echo "My Tailscale IP is: $(tailscale ip -4)"
+
+      #     # Ping your webhook server to test connectivity
+      #     # ping -c 4 100.70.24.24
+
+      #     echo "Test webhook connection..."
+      #     # Test webhook (replace with your actual webhook endpoint)
+      #     curl -s -X POST \
+      #       http://100.70.24.24:8000/deploy \
+      #       -H "Content-Type: application/json" \
+      #       -d '{"test": "connectivity", "source": "github-actions"}'
+      #     echo "Webhook test completed."

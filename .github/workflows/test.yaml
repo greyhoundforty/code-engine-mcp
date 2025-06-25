@@ -25,7 +25,7 @@ jobs:
           echo "My Tailscale IP is: $(tailscale ip -4)"
 
           # Ping your webhook server to test connectivity
-          ping -c 4 100.70.24.24
+          # ping -c 4 100.70.24.24
 
           # Test webhook (replace with your actual webhook endpoint)
           curl -X POST \

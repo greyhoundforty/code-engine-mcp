@@ -203,3 +203,26 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Project-specific ignores
+# Development and test files
+debug_*.py
+test_*.py
+*_test.py
+*.md.bak
+error.log
+
+# Configuration files with secrets
+claude_desktop_config.json
+*.mcp.env
+.mcp.env
+
+# Allow example configurations
+!claude_desktop_config.example.json
+
+# Temporary directories
+to-review/
+tests/
+
+# Build artifacts
+bandit-report.json

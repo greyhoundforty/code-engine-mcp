@@ -1,190 +1,221 @@
 # IBM Code Engine MCP Server
 
-A Modular Content Processing (MCP) server for interacting with IBM Code Engine resources through Claude. This server provides tools for listing and managing Code Engine projects, applications, and related resources.
+A Model Context Protocol (MCP) server for interacting with IBM Code Engine resources. This server provides tools to list and inspect Code Engine projects, applications, revisions, domain mappings, and secrets.
 
-## Overview
+## Available MCP Tools
 
-This MCP server enables Claude to directly interact with IBM Code Engine services by providing a set of tools for listing projects, applications, and viewing detailed information about your Code Engine resources. The server is designed to be run as a standalone service or in a Docker container.
+This server provides **13 comprehensive tools** for IBM Code Engine management:
 
-![MCP Server Architecture](code-engine-mcp.png)
+### Project Management
+- **`list_projects`** - List all Code Engine projects in your account
 
-## Installation
+### Application Management  
+- **`list_applications`** - List applications in a specific project
+- **`get_application`** - Get detailed application information
+- **`list_app_revisions`** - List revisions for a specific application
+- **`get_app_revision`** - Get detailed revision information
 
-### Prerequisites
+### Batch Job Management
+- **`list_jobs`** - List batch jobs in a specific project
+- **`get_job`** - Get detailed job information
+- **`list_job_runs`** - List job runs for a specific job or all jobs in a project
+- **`get_job_run`** - Get detailed job run information
 
-- Python 3.10+
-- IBM Cloud API key with access to Code Engine services
-- Docker (optional, for containerized deployment)
+### Domain Management
+- **`list_domain_mappings`** - List domain mappings in a project
+- **`get_domain_mapping`** - Get detailed domain mapping information
 
-### Setup
+### Secret Management
+- **`list_secrets`** - List secrets in a project (sensitive data automatically masked)
+- **`get_secret`** - Get detailed secret information (sensitive data automatically masked)
 
-1. Clone this repository
-2. Install dependencies:
+All tools include comprehensive error handling and return both formatted summaries and raw JSON data for maximum flexibility.
 
-```bash
-# Create a virtual environment (optional but recommended)
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+## Prerequisites
 
-# Install dependencies
-pip install -r requirements.txt
-```
+- Python 3.10 or later
+- [mise](https://github.com/jdx/mise) task runner
+- IBM Cloud account with Code Engine access
+- IBM Cloud API key with Code Engine permissions
+
+## Setup
+
+1. **Clone and setup environment:**
+   ```bash
+   git clone <your-repo>
+   cd <project-directory>
+   mise install
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   mise run uv:reqs
+   ```
+
+3. **Set your IBM Cloud API key:**
+   ```bash
+   export IBMCLOUD_API_KEY="your-api-key-here"
+   ```
+
+4. **Test the setup:**
+   ```bash
+   # Test MCP library imports
+   mise run test:mcp
+   
+   # Test InitializationOptions fix
+   mise run test:init
+   
+   # Test Code Engine connectivity
+   mise run test:client
+   
+   # Test all server versions
+   mise run test:servers
+   
+   # Run complete test suite
+   mise run test:all
+   ```
+
+5. **Run the server:**
+   ```bash
+   python ce_mcp_server_v3.py
+   ```
 
 ## Usage
 
-### Running Locally
+### Claude Desktop Integration
 
-1. Set your IBM Cloud API key:
-
-```bash
-export IBMCLOUD_API_KEY="your-api-key-here"
-```
-
-2. Run the server:
+For use with Claude Desktop, build and configure the Docker container:
 
 ```bash
-python ce_mcp_server.py
+# Build the image
+docker build -t code-engine-mcp:latest .
 ```
 
-### Running with Docker
+**Configure Claude Desktop:**
 
-1. Build the Docker image:
+1. **Get your IBM Cloud API Key:**
+   - Log into [IBM Cloud Console](https://cloud.ibm.com)
+   - Navigate to "Manage" → "Access (IAM)" → "API keys"
+   - Create a new API key with Code Engine access
 
+2. **Create Environment File:**
+   Create a `.mcp.env` file (recommended location: `~/.mcp.env`):
+   ```bash
+   IBMCLOUD_API_KEY=your-actual-api-key-here
+   ```
+
+3. **Add MCP Server Configuration:**
+   
+   **Option A: Using Environment File (Recommended)**
+   ```json
+   {
+     "mcpServers": {
+       "ibm-code-engine": {
+         "command": "docker",
+         "args": [
+           "run", "-i", "--rm",
+           "--env-file", "/Users/your-username/.mcp.env",
+           "code-engine-mcp:latest"
+         ]
+       }
+     }
+   }
+   ```
+
+   **Option B: Direct API Key**
+   ```json
+   {
+     "mcpServers": {
+       "ibm-code-engine": {
+         "command": "docker",
+         "args": [
+           "run", "-i", "--rm",
+           "-e", "IBMCLOUD_API_KEY=your-actual-api-key-here",
+           "-e", "LOG_LEVEL=INFO",
+           "code-engine-mcp:latest"
+         ]
+       }
+     }
+   }
+   ```
+
+4. **Restart Claude Desktop** to load the new MCP server.
+
+**Important:** 
+- Replace `/Users/your-username/.mcp.env` with the actual path to your environment file
+- The `${VARIABLE}` substitution syntax is not supported in Claude Desktop configurations
+- Using an environment file (Option A) is more secure and easier to manage
+
+### Development Mode
+
+Run the server directly for development:
 ```bash
-docker build -t ibm-code-engine-mcp .
+python ce_mcp_server_v3.py
 ```
-
-2. Run the container:
-
-```bash
-docker run -d \
-  --name code-engine-mcp \
-  -e IBMCLOUD_API_KEY="your-api-key-here" \
-  --restart unless-stopped \
-  ibm-code-engine-mcp
-```
-
-### Using with Mise
-
-If you have [Mise](https://github.com/jdx/mise) installed, you can use the provided tasks:
-
-```bash
-# Install dependencies
-mise run uv:reqs
-
-# Run tests
-mise run test:ce-client
-
-# Build Docker image
-mise run docker:build
-
-# Run Docker container
-mise run docker:run
-```
-
-## Available Tools
-
-The MCP server provides the following tools:
-
-1. **list_projects** - List all IBM Code Engine projects in your account
-2. **list_applications** - List applications in a specific Code Engine project
-3. **get_application** - Get detailed information about a specific application
-
-## Project Structure
-
-- `ce_mcp_server.py` - Main MCP server implementation
-- `utils.py` - Utility functions for Code Engine client
-- `Dockerfile` - Docker container definition
-- `healthcheck.py` - Health check script for Docker
-- `test_ce_client.py` - Test script for Code Engine client
-- `test_mcp_imports.py` - Test script for MCP library imports
-- `tests/` - Directory containing pytest test cases
 
 ## Configuration
 
-The server can be configured using the following environment variables:
+### Environment Variables
 
-- `IBMCLOUD_API_KEY` (required) - Your IBM Cloud API key
-- `IBMCLOUD_REGION` (optional, default: "us-south") - IBM Cloud region
-- `LOG_LEVEL` (optional, default: "INFO") - Logging level (DEBUG, INFO, WARNING, ERROR)
-- `MCP_SERVER_NAME` (optional, default: "ibm-code-engine-mcp") - Name of the MCP server
-- `MCP_SERVER_FILE` (optional, default: "ce_mcp_server.py") - Server file to run in Docker
+- `IBMCLOUD_API_KEY` - **Required** - Your IBM Cloud API key
+- `IBMCLOUD_REGION` - Optional - IBM Cloud region (default: us-south)
+- `LOG_LEVEL` - Optional - Logging level (default: INFO)
 
-## Testing
+### Supported Regions
 
-See the [Testing Guide](docs/testing.md) for information on running and creating tests.
+- `us-south` (default)
+- `us-east`
+- `eu-gb`
+- `eu-de`
+- `jp-tok`
+- `au-syd`
 
-## Development
+## Development Tasks
 
-For development, it's recommended to use the provided Mise tasks:
+| Command | Description |
+|---------|-------------|
+| `mise run dev` | Setup development environment |
+| `mise run test:all` | Run complete test suite |
+| `mise run test:mcp` | Test MCP library compatibility |
+| `mise run test:init` | Test InitializationOptions fix |
+| `mise run test:client` | Test Code Engine connectivity |
+| `mise run test:servers` | Test all server versions |
+| `mise run run:best` | Auto-run best working server |
+| `mise run quality` | Run all code quality checks |
+| `mise run format` | Format code with black |
+| `mise run lint` | Run flake8 linting |
+| `mise run docker:build` | Build Docker image |
+| `mise run docker:run` | Run container |
+| `mise run clean` | Clean up artifacts |
 
-```bash
-# Set up development environment
-mise run dev
+## Error Handling
 
-# Run code quality checks
-mise run quality
+The server includes comprehensive error handling:
+- IBM Cloud API authentication errors
+- Network connectivity issues
+- Invalid project/resource IDs
+- Rate limiting and quota errors
 
-# Test Code Engine client
-mise run test:ce-client
-```
+All errors are logged and returned as user-friendly messages.
 
-### Pre-commit Hooks
+## Security Notes
 
-This project uses pre-commit hooks to ensure code quality and security. See the [Pre-commit Guide](docs/pre-commit.md) for setup instructions.
+- Sensitive data in secrets is automatically masked in responses
+- API keys are never logged or exposed
+- Container runs as non-root user
+- No sensitive data is cached or persisted
 
 ## Troubleshooting
 
-If you encounter issues, try the following:
+For detailed troubleshooting steps and common issues, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
-1. Check your IBM Cloud API key is valid and has the necessary permissions
-2. Verify your Python environment has all required dependencies
-3. Run the test scripts to diagnose potential issues:
+## License
 
-```bash
-# Test Code Engine client
-python test_ce_client.py
+[Your license here]
 
-# Test MCP library imports
-python test_mcp_imports.py
+## Contributing
 
-# Run pytest tests
-pytest
-```
-
-## Architecture
-
-The MCP server integrates with Claude and IBM Cloud services as shown in the architecture diagram:
-
-### Architecture Components
-
-1. **User & Claude Interface**:
-   - User requests information about IBM Code Engine resources
-   - Claude processes these requests and calls the appropriate MCP tools
-
-2. **MCP Server**:
-   - Handles tool calls from Claude
-   - Manages the routing of requests to appropriate handlers
-   - Formats responses for Claude to present to the user
-
-3. **Utilities**:
-   - Authenticates with IBM Cloud using IAM
-   - Makes API requests to Code Engine services
-   - Processes and formats response data
-
-4. **IBM Cloud**:
-   - Validates authentication via IAM
-   - Processes Code Engine API requests
-   - Returns resource data from Code Engine projects, applications, etc.
-
-### Data Flow
-
-1. User requests Code Engine information from Claude
-2. Claude makes tool calls to the MCP server
-3. The server routes requests to appropriate handlers
-4. Handlers use utility functions to interact with IBM Cloud
-5. The Code Engine API returns resource data
-6. Data is processed, formatted, and returned to Claude
-7. Claude presents the results to the user
-
-This architecture enables seamless integration between Claude and IBM Code Engine resources, allowing users to query and manage their resources directly through the Claude interface.
+1. Fork the repository
+2. Create a feature branch
+3. Run quality checks: `mise run quality`
+4. Submit a pull request

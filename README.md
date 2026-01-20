@@ -109,6 +109,8 @@ Claude will automatically:
 
 ## Available Tools
 
+The MCP server provides **22 tools** across 6 categories for complete Code Engine management:
+
 ### Project Management (2 tools)
 - `list_projects` - List all Code Engine projects
 - `find_project_by_name` - Find project by name with optional resource group filter
@@ -145,6 +147,8 @@ Claude will automatically:
 
 All tools return formatted summaries and raw JSON for flexibility.
 
+**📖 For detailed documentation of all tools including parameters, examples, and usage patterns, see [TOOLS.md](TOOLS.md)**
+
 ## Configuration
 
 ### Environment Variables
@@ -175,13 +179,17 @@ All tools return formatted summaries and raw JSON for flexibility.
 ## Project Structure
 
 ```
-code-engine-cli-skill/
-├── ce_mcp_server_v3.py      # MCP server implementation
+code-engine-mcp/
+├── ce_mcp_server_v3.py      # MCP server implementation (22 tools)
+├── ce_push.py                # Build-source deployment CLI
 ├── utils.py                  # Code Engine SDK wrapper
 ├── Dockerfile                # Container definition
 ├── requirements.txt          # Python dependencies
+├── README.md                 # This file
+├── TOOLS.md                  # Detailed tool documentation
 └── examples/
-    └── simple-flask-app/     # Example Flask application
+    ├── simple-flask-app/     # Example Flask application
+    └── simple-go-app/        # Example Go application
 ```
 
 ## Development

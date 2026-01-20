@@ -1,14 +1,82 @@
 #!/usr/bin/env python3
 """
-Code Engine Build-Source Deployment CLI with Project Targeting
+Code Engine Build-Source Deployment CLI - Direct IBM Cloud CLI Wrapper
 
-A command-line interface for deploying Python applications to IBM Cloud Code Engine
-using the integrated --build-source option with proper project context management.
+This script provides a command-line interface for deploying applications to IBM Cloud
+Code Engine using the integrated --build-source option. It wraps the IBM Cloud CLI
+to package local source code, build Docker images, and deploy applications in a single
+operation.
 
-Usage:
-    python3 ce_push.py --app-name myapp --port 9090
-    python3 ce_push.py --app-name myapp --port 8080 --project rst-ce-dev
-    python3 ce_push.py --app-name myapp --port 3000 --project rst-ce-dev --resource-group CDE
+FEATURES:
+  - Deploys from local source directory (packages and uploads source)
+  - Builds Docker image using Dockerfile in source directory
+  - Deploys application with auto-scaling configuration
+  - Stores images in IBM Container Registry
+  - Supports project targeting and resource group filtering
+  - Custom or auto-generated image names
+
+REQUIREMENTS:
+  - IBM Cloud CLI (ibmcloud) must be installed and authenticated
+  - Code Engine CLI plugin (ce) must be installed
+  - Valid IBM Cloud API key
+  - Source directory must contain a Dockerfile
+  - Target Code Engine project must exist
+
+USAGE EXAMPLES:
+  # Deploy with default project (rst-ce-dev)
+  python3 ce_push.py --app-name myapp --port 9090
+
+  # Deploy to specific project
+  python3 ce_push.py --app-name myapp --port 8080 --project my-project
+
+  # Deploy with custom image name
+  python3 ce_push.py --app-name myapp --port 8080 --image myapp:v1 --namespace rtiffany
+
+  # Deploy with resource group filtering
+  python3 ce_push.py --app-name myapp --port 3000 --resource-group CDE
+
+  # Deploy from specific directory
+  cd examples/simple-go-app
+  python3 ../../ce_push.py --app-name simple-go-app --port 8080
+
+COMMAND-LINE ARGUMENTS:
+  --app-name (required): Name of the application to create
+  --port (default: 8080): Port the application listens on
+  --project (default: rst-ce-dev): Code Engine project name or ID
+  --region (default: us-south): IBM Cloud region
+  --image: Custom image name (stored in private.us.icr.io/namespace/)
+  --namespace: Registry namespace for custom image
+  --resource-group: Resource group to filter/target projects
+
+DEPLOYMENT PROCESS:
+  1. Authenticates with IBM Cloud (if not already authenticated)
+  2. Targets the specified Code Engine project
+  3. Packages source files from current directory
+  4. Uploads source to Code Engine
+  5. Builds Docker image using Dockerfile
+  6. Pushes image to IBM Container Registry
+  7. Deploys application with specified configuration
+  8. Returns application URL
+
+OUTPUT:
+  The script provides detailed logging of each step and returns:
+  - Build status and progress
+  - Generated or custom image name
+  - Application deployment status
+  - Public application URL
+
+RELATED TOOLS:
+  - MCP Server Tool: create_app_from_source (calls this script)
+  - IBM Cloud CLI: ibmcloud ce app create --build-source
+  - See TOOLS.md for comprehensive MCP tool documentation
+
+TROUBLESHOOTING:
+  If deployment fails, check:
+  - IBM Cloud CLI is installed: ibmcloud --version
+  - Code Engine plugin is installed: ibmcloud plugin list
+  - Authenticated: ibmcloud login
+  - Project exists: ibmcloud ce project list
+  - Dockerfile exists in source directory
 """
 
 import argparse

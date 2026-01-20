@@ -1,15 +1,12 @@
-# Simple Flask Test App
+# Simple Go Test App
 
-A minimal Flask application for testing IBM Code Engine MCP Server deployment workflows.
+A minimal Go application for testing IBM Code Engine MCP Server deployment workflows.
 
 ## Local Testing
 
 ```bash
-# Install dependencies
-pip install -r requirements.txt
-
 # Run locally
-python app.py
+go run main.go
 ```
 
 Visit http://localhost:8080 to see the app running.
@@ -18,10 +15,10 @@ Visit http://localhost:8080 to see the app running.
 
 ```bash
 # Build the image
-docker build -t test-flask-app:latest .
+docker build -t test-go-app:latest .
 
 # Run locally
-docker run -p 8080:8080 test-flask-app:latest
+docker run -p 8080:8080 test-go-app:latest
 ```
 
 ## Deploy to Code Engine

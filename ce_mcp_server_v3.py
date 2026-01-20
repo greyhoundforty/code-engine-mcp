@@ -1,7 +1,69 @@
 #!/usr/bin/env python3
 """
-IBM Code Engine MCP Server - Minimal Implementation
-Tries to run without InitializationOptions
+IBM Code Engine MCP Server - Model Context Protocol Implementation
+
+This MCP server provides Claude Code and Claude Desktop with tools to interact with
+IBM Cloud Code Engine services. It exposes 22 tools across 6 categories for managing
+serverless applications, batch jobs, builds, and related resources.
+
+AVAILABLE TOOLS (22 total):
+
+Project Management (2 tools):
+  - list_projects: List all Code Engine projects
+  - find_project_by_name: Find project by name with resource group filtering
+
+Application Management (7 tools):
+  - list_applications: List apps in a project
+  - get_application: Get app details and configuration
+  - create_application: Create app from pre-built image
+  - update_application: Update app configuration
+  - create_app_from_source: Deploy from local source (build + deploy)
+  - list_app_revisions: List application deployment history
+  - get_app_revision: Get specific revision details
+
+Build Management (5 tools):
+  - create_build: Create build configuration from Git source
+  - list_builds: List build configurations
+  - create_build_run: Execute a build
+  - get_build_run: Get build run status
+  - list_build_runs: List build runs with filtering
+
+Job Management (4 tools):
+  - list_jobs: List batch jobs
+  - get_job: Get job details
+  - list_job_runs: List job executions
+  - get_job_run: Get job run status
+
+Domain Management (2 tools):
+  - list_domain_mappings: List custom domain mappings
+  - get_domain_mapping: Get domain mapping details
+
+Secret Management (2 tools):
+  - list_secrets: List secrets (data masked)
+  - get_secret: Get secret details (data masked)
+
+CONFIGURATION:
+  Required environment variables:
+    - IBMCLOUD_API_KEY: IBM Cloud API key for authentication
+  Optional environment variables:
+    - IBMCLOUD_REGION: IBM Cloud region (default: us-south)
+    - LOG_LEVEL: Logging level (default: INFO)
+
+USAGE:
+  Run as MCP server via Docker:
+    docker run -i --rm --env-file ~/.mcp.env code-engine-mcp:latest
+
+  Run locally for development:
+    export IBMCLOUD_API_KEY=your-api-key
+    python3 ce_mcp_server_v3.py
+
+SECURITY:
+  - All secret values are automatically masked in responses
+  - API keys loaded via environment variables (never cached)
+  - Container runs as non-root user
+  - Ephemeral containers (--rm flag)
+
+See TOOLS.md for detailed documentation of all available tools.
 """
 
 import asyncio

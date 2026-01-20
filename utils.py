@@ -1,6 +1,72 @@
 """
-Utility functions for IBM Code Engine MCP Server
-Handles authentication, client setup, and resource operations
+IBM Code Engine MCP Server - Utility Functions and SDK Wrapper
+
+This module provides utility functions and a wrapper class for interacting with the
+IBM Code Engine SDK (ibm_code_engine_sdk). It handles authentication, API client
+setup, and all resource operations required by the MCP server tools.
+
+MAIN COMPONENTS:
+
+CodeEngineClient Class:
+  Wrapper around IBM Code Engine SDK with methods for:
+  - Project management (list, get, find by name)
+  - Application management (list, get, create, update, revisions)
+  - Build management (create, list, create runs, get run status)
+  - Job management (list, get, list runs, get run status)
+  - Domain management (list, get mappings)
+  - Secret management (list, get secrets with masking)
+
+Helper Functions:
+  - create_code_engine_client(): Factory function for creating authenticated clients
+  - format_project_summary(): Format project data for human-readable display
+  - format_apps_summary(): Format application list for display
+  - format_jobs_summary(): Format job list for display
+  - format_job_runs_summary(): Format job run list for display
+  - mask_sensitive_data(): Automatically mask secret values for security
+
+Authentication:
+  Uses IBM Cloud IAM authentication with API keys. The client automatically:
+  - Configures IAM authenticator with provided API key
+  - Sets up service endpoint for specified region
+  - Handles token refresh and retries
+  - Raises CodeEngineError for authentication failures
+
+Error Handling:
+  - CodeEngineError: Custom exception for all Code Engine operations
+  - Automatic retry with exponential backoff for transient failures
+  - Detailed error messages with IBM Cloud API error codes
+  - Logs all errors for debugging
+
+Security Features:
+  - Automatic masking of secret data in all responses
+  - API keys never logged or exposed
+  - Sensitive data replaced with "********" in outputs
+  - No credential caching
+
+SDK Integration:
+  Wraps the official IBM Code Engine SDK (ibm-code-engine-sdk):
+  - CodeEngineV2 client for API operations
+  - Pagers for handling paginated results
+  - ApiException for error handling
+  - IAMAuthenticator for authentication
+
+Region Support:
+  - us-south (Dallas) - https://api.us-south.codeengine.cloud.ibm.com
+  - us-east (Washington DC) - https://api.us-east.codeengine.cloud.ibm.com
+  - eu-gb (London) - https://api.eu-gb.codeengine.cloud.ibm.com
+  - eu-de (Frankfurt) - https://api.eu-de.codeengine.cloud.ibm.com
+  - jp-tok (Tokyo) - https://api.jp-tok.codeengine.cloud.ibm.com
+  - au-syd (Sydney) - https://api.au-syd.codeengine.cloud.ibm.com
+
+Usage:
+  from utils import create_code_engine_client
+
+  client = create_code_engine_client(api_key="your-key", region="us-south")
+  projects = client.list_projects()
+  apps = client.list_applications(project_id="abc123")
+
+This module is used by ce_mcp_server_v3.py to implement all 22 MCP tools.
+See TOOLS.md for documentation of available MCP tools.
 """
 
 import json

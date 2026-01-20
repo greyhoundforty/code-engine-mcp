@@ -1,20 +1,24 @@
-"""
-Simple Flask application for testing IBM Code Engine MCP Server
-"""
-from flask import Flask, jsonify, render_template_string
-import os
-import socket
-from datetime import datetime
+package main
 
-app = Flask(__name__)
+import (
+	"encoding/json"
+	"fmt"
+	"html/template"
+	"log"
+	"net/http"
+	"os"
+	"time"
+)
 
-HTML_TEMPLATE = """
+const version = "0.0.1"
+
+var htmlTemplate = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Engine - Python App</title>
+    <title>Code Engine - Go App</title>
     <style>
         * {
             margin: 0;
@@ -143,29 +147,29 @@ HTML_TEMPLATE = """
 <body>
     <div class="container">
         <div class="header">
-            <h1>Python App</h1>
+            <h1>Go App</h1>
             <div class="subtitle">Code Engine Demo</div>
         </div>
 
         <div class="info-grid">
             <div class="info-item">
                 <div class="label">Version</div>
-                <div class="value">{{ version }}</div>
+                <div class="value">{{.Version}}</div>
             </div>
 
             <div class="info-item">
                 <div class="label">Environment</div>
-                <div class="value">{{ environment }}</div>
+                <div class="value">{{.Environment}}</div>
             </div>
 
             <div class="info-item">
                 <div class="label">Hostname</div>
-                <div class="value">{{ hostname }}</div>
+                <div class="value">{{.Hostname}}</div>
             </div>
 
             <div class="info-item">
                 <div class="label">Timestamp</div>
-                <div class="value">{{ timestamp }}</div>
+                <div class="value">{{.Timestamp}}</div>
             </div>
         </div>
 
@@ -175,37 +179,100 @@ HTML_TEMPLATE = """
         </div>
 
         <div class="footer">
-            Powered by Flask on IBM Code Engine
+            Powered by Go on IBM Code Engine
         </div>
     </div>
 </body>
 </html>
-"""
+`
 
-@app.route('/')
-def hello():
-    return render_template_string(
-        HTML_TEMPLATE,
-        version='0.0.3',
-        environment=os.getenv('ENVIRONMENT', 'development'),
-        hostname=socket.gethostname(),
-        timestamp=datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
-    )
+type PageData struct {
+	Version     string
+	Environment string
+	Hostname    string
+	Timestamp   string
+}
 
-@app.route('/health')
-def health():
-    return jsonify({'status': 'healthy'}), 200
+type InfoResponse struct {
+	Message     string `json:"message"`
+	Version     string `json:"version"`
+	Environment string `json:"environment"`
+	Hostname    string `json:"hostname"`
+	Timestamp   string `json:"timestamp"`
+}
 
-@app.route('/api/info')
-def info():
-    return jsonify({
-        'message': 'Hello from Code Engine!',
-        'version': '0.0.3',
-        'environment': os.getenv('ENVIRONMENT', 'development'),
-        'hostname': socket.gethostname(),
-        'timestamp': datetime.utcnow().isoformat()
-    })
+type HealthResponse struct {
+	Status string `json:"status"`
+}
 
-if __name__ == '__main__':
-    port = int(os.getenv('PORT', 8080))
-    app.run(host='0.0.0.0', port=port)
+func getEnvironment() string {
+	env := os.Getenv("ENVIRONMENT")
+	if env == "" {
+		return "development"
+	}
+	return env
+}
+
+func getHostname() string {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return "unknown"
+	}
+	return hostname
+}
+
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl, err := template.New("index").Parse(htmlTemplate)
+	if err != nil {
+		http.Error(w, "Template parsing error", http.StatusInternalServerError)
+		return
+	}
+
+	data := PageData{
+		Version:     version,
+		Environment: getEnvironment(),
+		Hostname:    getHostname(),
+		Timestamp:   time.Now().UTC().Format("2006-01-02 15:04:05 UTC"),
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := tmpl.Execute(w, data); err != nil {
+		http.Error(w, "Template execution error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(HealthResponse{Status: "healthy"})
+}
+
+func infoHandler(w http.ResponseWriter, r *http.Request) {
+	response := InfoResponse{
+		Message:     "Hello from Code Engine!",
+		Version:     version,
+		Environment: getEnvironment(),
+		Hostname:    getHostname(),
+		Timestamp:   time.Now().UTC().Format(time.RFC3339),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func main() {
+	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("/health", healthHandler)
+	http.HandleFunc("/api/info", infoHandler)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	addr := fmt.Sprintf("0.0.0.0:%s", port)
+	log.Printf("Server starting on %s", addr)
+	if err := http.ListenAndServe(addr, nil); err != nil {
+		log.Fatalf("Server failed to start: %v", err)
+	}
+}

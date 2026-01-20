@@ -21,8 +21,8 @@ A Model Context Protocol (MCP) server for IBM Cloud Code Engine. Enables natural
 ### 1. Build the Docker Image
 
 ```bash
-git clone <your-repo>
-cd code-engine-cli-skill
+git clone https://github.com/greyhoundforty/code-engine-mcp
+cd code-engine-mcp
 docker build -t code-engine-mcp:latest .
 ```
 

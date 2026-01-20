@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+  "ibm-code-engine": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "--env-file", "/Users/ryan/.mcp.env",
+        "code-engine-mcp:latest"
+      ]
+  }
+    },
+  "preferences": {
+    "quickEntryDictationShortcut": "capslock"
+  }
+}

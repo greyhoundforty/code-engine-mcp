@@ -319,6 +319,321 @@ async def handle_list_tools() -> list[types.Tool]:
                 "required": ["project_id", "secret_name"],
                 "additionalProperties": False
             }
+        ),
+        types.Tool(
+            name="create_application",
+            description="Create a new Code Engine application with specified configuration",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "string",
+                        "description": "Code Engine project ID"
+                    },
+                    "app_name": {
+                        "type": "string",
+                        "description": "Name for the new application"
+                    },
+                    "image_reference": {
+                        "type": "string",
+                        "description": "Container image reference (e.g., 'icr.io/namespace/image:tag')"
+                    },
+                    "image_port": {
+                        "type": "integer",
+                        "description": "Port the application listens on (default: 8080)",
+                        "default": 8080
+                    },
+                    "scale_min_instances": {
+                        "type": "integer",
+                        "description": "Minimum number of instances (default: 0)",
+                        "default": 0
+                    },
+                    "scale_max_instances": {
+                        "type": "integer",
+                        "description": "Maximum number of instances (default: 10)",
+                        "default": 10
+                    },
+                    "scale_cpu_limit": {
+                        "type": "string",
+                        "description": "CPU limit per instance (e.g., '1', '0.5')",
+                        "default": "1"
+                    },
+                    "scale_memory_limit": {
+                        "type": "string",
+                        "description": "Memory limit per instance (e.g., '4G', '2G')",
+                        "default": "4G"
+                    },
+                    "managed_domain_mappings": {
+                        "type": "string",
+                        "description": "Domain mapping visibility: 'local_public', 'local_private', 'local'",
+                        "default": "local_public"
+                    }
+                },
+                "required": ["project_id", "app_name", "image_reference"],
+                "additionalProperties": False
+            }
+        ),
+        types.Tool(
+            name="update_application",
+            description="Update an existing Code Engine application",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "string",
+                        "description": "Code Engine project ID"
+                    },
+                    "app_name": {
+                        "type": "string",
+                        "description": "Name of the application to update"
+                    },
+                    "image_reference": {
+                        "type": "string",
+                        "description": "New container image reference"
+                    },
+                    "scale_min_instances": {
+                        "type": "integer",
+                        "description": "Minimum number of instances"
+                    },
+                    "scale_max_instances": {
+                        "type": "integer",
+                        "description": "Maximum number of instances"
+                    },
+                    "scale_cpu_limit": {
+                        "type": "string",
+                        "description": "CPU limit per instance"
+                    },
+                    "scale_memory_limit": {
+                        "type": "string",
+                        "description": "Memory limit per instance"
+                    }
+                },
+                "required": ["project_id", "app_name"],
+                "additionalProperties": False
+            }
+        ),
+        types.Tool(
+            name="create_build",
+            description="Create a new build configuration for building container images from source",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "string",
+                        "description": "Code Engine project ID"
+                    },
+                    "build_name": {
+                        "type": "string",
+                        "description": "Name for the build configuration"
+                    },
+                    "output_image": {
+                        "type": "string",
+                        "description": "Output container image reference (e.g., 'icr.io/namespace/image:tag')"
+                    },
+                    "output_secret": {
+                        "type": "string",
+                        "description": "Name of secret for pushing to container registry"
+                    },
+                    "source_url": {
+                        "type": "string",
+                        "description": "Git repository URL containing source code"
+                    },
+                    "source_revision": {
+                        "type": "string",
+                        "description": "Git branch, tag, or commit (default: 'main')",
+                        "default": "main"
+                    },
+                    "source_context_dir": {
+                        "type": "string",
+                        "description": "Directory in repo containing source (default: root)"
+                    },
+                    "strategy_type": {
+                        "type": "string",
+                        "description": "Build strategy: 'dockerfile' or 'buildpacks' (default: 'dockerfile')",
+                        "default": "dockerfile"
+                    },
+                    "strategy_spec_file": {
+                        "type": "string",
+                        "description": "Path to Dockerfile (default: './Dockerfile')",
+                        "default": "./Dockerfile"
+                    },
+                    "strategy_size": {
+                        "type": "string",
+                        "description": "Build resources: 'small', 'medium', 'large', 'xlarge' (default: 'medium')",
+                        "default": "medium"
+                    }
+                },
+                "required": ["project_id", "build_name", "output_image", "output_secret", "source_url"],
+                "additionalProperties": False
+            }
+        ),
+        types.Tool(
+            name="create_build_run",
+            description="Execute a build to create a container image from source code",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "string",
+                        "description": "Code Engine project ID"
+                    },
+                    "build_name": {
+                        "type": "string",
+                        "description": "Name of existing build configuration to execute"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Optional name for this build run"
+                    }
+                },
+                "required": ["project_id", "build_name"],
+                "additionalProperties": False
+            }
+        ),
+        types.Tool(
+            name="get_build_run",
+            description="Get the status and details of a build run",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "string",
+                        "description": "Code Engine project ID"
+                    },
+                    "build_run_name": {
+                        "type": "string",
+                        "description": "Name of the build run"
+                    }
+                },
+                "required": ["project_id", "build_run_name"],
+                "additionalProperties": False
+            }
+        ),
+        types.Tool(
+            name="list_builds",
+            description="List all build configurations in a project",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "string",
+                        "description": "Code Engine project ID"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of builds to return (default: 100)",
+                        "default": 100,
+                        "minimum": 1,
+                        "maximum": 200
+                    }
+                },
+                "required": ["project_id"],
+                "additionalProperties": False
+            }
+        ),
+        types.Tool(
+            name="list_build_runs",
+            description="List build runs in a project, optionally filtered by build name",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "string",
+                        "description": "Code Engine project ID"
+                    },
+                    "build_name": {
+                        "type": "string",
+                        "description": "Optional: filter by build configuration name"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of build runs to return (default: 100)",
+                        "default": 100,
+                        "minimum": 1,
+                        "maximum": 200
+                    }
+                },
+                "required": ["project_id"],
+                "additionalProperties": False
+            }
+        ),
+        types.Tool(
+            name="find_project_by_name",
+            description="Find a Code Engine project by name, optionally filtered by resource group",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_name": {
+                        "type": "string",
+                        "description": "Name of the project to find"
+                    },
+                    "resource_group_id": {
+                        "type": "string",
+                        "description": "Optional resource group ID to filter search"
+                    }
+                },
+                "required": ["project_name"],
+                "additionalProperties": False
+            }
+        ),
+        types.Tool(
+            name="create_app_from_source",
+            description="Deploy application from local source using Code Engine's integrated build-source feature. Packages source, builds Docker image, and deploys automatically.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "project_id": {
+                        "type": "string",
+                        "description": "Code Engine project ID"
+                    },
+                    "app_name": {
+                        "type": "string",
+                        "description": "Name of the application to create"
+                    },
+                    "source_path": {
+                        "type": "string",
+                        "description": "Path to source code directory (default: '.')",
+                        "default": "."
+                    },
+                    "port": {
+                        "type": "integer",
+                        "description": "Port the application listens on (default: 8080)",
+                        "default": 8080,
+                        "minimum": 1,
+                        "maximum": 65535
+                    },
+                    "image_name": {
+                        "type": "string",
+                        "description": "Optional custom image name (e.g., 'private.us.icr.io/namespace/image:tag')"
+                    },
+                    "min_scale": {
+                        "type": "integer",
+                        "description": "Minimum number of instances (default: 1)",
+                        "default": 1,
+                        "minimum": 0,
+                        "maximum": 100
+                    },
+                    "max_scale": {
+                        "type": "integer",
+                        "description": "Maximum number of instances (default: 10)",
+                        "default": 10,
+                        "minimum": 1,
+                        "maximum": 100
+                    },
+                    "cpu_limit": {
+                        "type": "string",
+                        "description": "CPU limit per instance (default: '0.5')",
+                        "default": "0.5"
+                    },
+                    "memory_limit": {
+                        "type": "string",
+                        "description": "Memory limit per instance (default: '4G')",
+                        "default": "4G"
+                    }
+                },
+                "required": ["project_id", "app_name"],
+                "additionalProperties": False
+            }
         )
     ]
 
@@ -363,6 +678,24 @@ async def handle_call_tool(name: str, arguments: dict) -> list[types.TextContent
             return await handle_list_secrets(arguments)
         elif name == "get_secret":
             return await handle_get_secret(arguments)
+        elif name == "create_application":
+            return await handle_create_application(arguments)
+        elif name == "update_application":
+            return await handle_update_application(arguments)
+        elif name == "create_build":
+            return await handle_create_build(arguments)
+        elif name == "create_build_run":
+            return await handle_create_build_run(arguments)
+        elif name == "get_build_run":
+            return await handle_get_build_run(arguments)
+        elif name == "list_builds":
+            return await handle_list_builds(arguments)
+        elif name == "list_build_runs":
+            return await handle_list_build_runs(arguments)
+        elif name == "find_project_by_name":
+            return await handle_find_project_by_name(arguments)
+        elif name == "create_app_from_source":
+            return await handle_create_app_from_source(arguments)
         else:
             return [types.TextContent(
                 type="text",
@@ -675,6 +1008,372 @@ async def handle_get_secret(arguments: dict) -> list[types.TextContent]:
             text=f"**Secret Details for {secret_name} (sensitive data masked):**\n```json\n{raw_json}\n```"
         )]
     
+    except CodeEngineError as e:
+        return [types.TextContent(type="text", text=f"Code Engine API error: {str(e)}")]
+    except Exception as e:
+        return [types.TextContent(type="text", text=f"Unexpected error: {str(e)}")]
+
+async def handle_create_application(arguments: dict) -> list[types.TextContent]:
+    """Handle create_application tool call"""
+    try:
+        project_id = arguments.get('project_id')
+        app_name = arguments.get('app_name')
+        image_reference = arguments.get('image_reference')
+        
+        # Optional parameters
+        kwargs = {}
+        if 'image_port' in arguments:
+            kwargs['image_port'] = arguments['image_port']
+        if 'scale_min_instances' in arguments:
+            kwargs['scale_min_instances'] = arguments['scale_min_instances']
+        if 'scale_max_instances' in arguments:
+            kwargs['scale_max_instances'] = arguments['scale_max_instances']
+        if 'scale_cpu_limit' in arguments:
+            kwargs['scale_cpu_limit'] = arguments['scale_cpu_limit']
+        if 'scale_memory_limit' in arguments:
+            kwargs['scale_memory_limit'] = arguments['scale_memory_limit']
+        if 'managed_domain_mappings' in arguments:
+            kwargs['managed_domain_mappings'] = arguments['managed_domain_mappings']
+        
+        app = ce_client.create_application(
+            project_id=project_id,
+            app_name=app_name,
+            image_reference=image_reference,
+            **kwargs
+        )
+        
+        raw_json = json.dumps(app, indent=2, default=str)
+        
+        return [types.TextContent(
+            type="text",
+            text=f"**Application {app_name} created successfully!**\n\n```json\n{raw_json}\n```"
+        )]
+    
+    except CodeEngineError as e:
+        return [types.TextContent(type="text", text=f"Code Engine API error: {str(e)}")]
+    except Exception as e:
+        return [types.TextContent(type="text", text=f"Unexpected error: {str(e)}")]
+
+async def handle_update_application(arguments: dict) -> list[types.TextContent]:
+    """Handle update_application tool call"""
+    try:
+        project_id = arguments.get('project_id')
+        app_name = arguments.get('app_name')
+        
+        # Build kwargs from optional parameters
+        kwargs = {}
+        if 'image_reference' in arguments:
+            kwargs['image_reference'] = arguments['image_reference']
+        if 'scale_min_instances' in arguments:
+            kwargs['scale_min_instances'] = arguments['scale_min_instances']
+        if 'scale_max_instances' in arguments:
+            kwargs['scale_max_instances'] = arguments['scale_max_instances']
+        if 'scale_cpu_limit' in arguments:
+            kwargs['scale_cpu_limit'] = arguments['scale_cpu_limit']
+        if 'scale_memory_limit' in arguments:
+            kwargs['scale_memory_limit'] = arguments['scale_memory_limit']
+        
+        app = ce_client.update_application(
+            project_id=project_id,
+            app_name=app_name,
+            **kwargs
+        )
+        
+        raw_json = json.dumps(app, indent=2, default=str)
+        
+        return [types.TextContent(
+            type="text",
+            text=f"**Application {app_name} updated successfully!**\n\n```json\n{raw_json}\n```"
+        )]
+    
+    except CodeEngineError as e:
+        return [types.TextContent(type="text", text=f"Code Engine API error: {str(e)}")]
+    except Exception as e:
+        return [types.TextContent(type="text", text=f"Unexpected error: {str(e)}")]
+
+async def handle_create_build(arguments: dict) -> list[types.TextContent]:
+    """Handle create_build tool call"""
+    try:
+        project_id = arguments.get('project_id')
+        build_name = arguments.get('build_name')
+        output_image = arguments.get('output_image')
+        output_secret = arguments.get('output_secret')
+        source_url = arguments.get('source_url')
+        
+        # Optional parameters
+        kwargs = {}
+        if 'source_revision' in arguments:
+            kwargs['source_revision'] = arguments['source_revision']
+        if 'source_context_dir' in arguments:
+            kwargs['source_context_dir'] = arguments['source_context_dir']
+        if 'strategy_type' in arguments:
+            kwargs['strategy_type'] = arguments['strategy_type']
+        if 'strategy_spec_file' in arguments:
+            kwargs['strategy_spec_file'] = arguments['strategy_spec_file']
+        if 'strategy_size' in arguments:
+            kwargs['strategy_size'] = arguments['strategy_size']
+        
+        build = ce_client.create_build(
+            project_id=project_id,
+            build_name=build_name,
+            output_image=output_image,
+            output_secret=output_secret,
+            source_url=source_url,
+            **kwargs
+        )
+        
+        raw_json = json.dumps(build, indent=2, default=str)
+        
+        return [types.TextContent(
+            type="text",
+            text=f"**Build configuration {build_name} created successfully!**\n\n```json\n{raw_json}\n```"
+        )]
+    
+    except CodeEngineError as e:
+        return [types.TextContent(type="text", text=f"Code Engine API error: {str(e)}")]
+    except Exception as e:
+        return [types.TextContent(type="text", text=f"Unexpected error: {str(e)}")]
+
+async def handle_create_build_run(arguments: dict) -> list[types.TextContent]:
+    """Handle create_build_run tool call"""
+    try:
+        project_id = arguments.get('project_id')
+        build_name = arguments.get('build_name')
+        
+        # Optional parameters
+        kwargs = {'build_name': build_name}
+        if 'name' in arguments:
+            kwargs['name'] = arguments['name']
+        
+        build_run = ce_client.create_build_run(
+            project_id=project_id,
+            **kwargs
+        )
+        
+        run_name = build_run.get('name', 'unnamed')
+        status = build_run.get('status', 'unknown')
+        
+        raw_json = json.dumps(build_run, indent=2, default=str)
+        
+        return [types.TextContent(
+            type="text",
+            text=f"**Build run {run_name} started!**\n\nStatus: {status}\n\nUse `get_build_run` with name '{run_name}' to check progress.\n\n```json\n{raw_json}\n```"
+        )]
+    
+    except CodeEngineError as e:
+        return [types.TextContent(type="text", text=f"Code Engine API error: {str(e)}")]
+    except Exception as e:
+        return [types.TextContent(type="text", text=f"Unexpected error: {str(e)}")]
+
+async def handle_get_build_run(arguments: dict) -> list[types.TextContent]:
+    """Handle get_build_run tool call"""
+    try:
+        project_id = arguments.get('project_id')
+        build_run_name = arguments.get('build_run_name')
+        
+        build_run = ce_client.get_build_run(
+            project_id=project_id,
+            build_run_name=build_run_name
+        )
+        
+        status = build_run.get('status', 'unknown')
+        status_details = build_run.get('status_details', {})
+        
+        summary = f"**Build Run: {build_run_name}**\n\n"
+        summary += f"Status: **{status}**\n"
+        
+        if status_details:
+            if 'completion_time' in status_details:
+                summary += f"Completed: {status_details['completion_time']}\n"
+            if 'start_time' in status_details:
+                summary += f"Started: {status_details['start_time']}\n"
+            if 'reason' in status_details:
+                summary += f"Reason: {status_details['reason']}\n"
+        
+        output_image = build_run.get('output_image', 'N/A')
+        summary += f"\nOutput Image: {output_image}\n"
+        
+        raw_json = json.dumps(build_run, indent=2, default=str)
+        
+        return [types.TextContent(
+            type="text",
+            text=f"{summary}\n\n**Full Details:**\n```json\n{raw_json}\n```"
+        )]
+    
+    except CodeEngineError as e:
+        return [types.TextContent(type="text", text=f"Code Engine API error: {str(e)}")]
+    except Exception as e:
+        return [types.TextContent(type="text", text=f"Unexpected error: {str(e)}")]
+
+async def handle_list_builds(arguments: dict) -> list[types.TextContent]:
+    """Handle list_builds tool call"""
+    try:
+        project_id = arguments.get('project_id')
+        limit = arguments.get('limit', 100)
+        
+        builds = ce_client.list_builds(project_id=project_id, limit=limit)
+        
+        if not builds:
+            formatted_summary = f"No build configurations found in project {project_id}."
+        else:
+            formatted_summary = f"Found {len(builds)} build configurations in project {project_id}:\n\n"
+            for build in builds:
+                formatted_summary += f"• **{build.get('name', 'Unknown')}**\n"
+                formatted_summary += f"  Output: {build.get('output_image', 'Unknown')}\n"
+                formatted_summary += f"  Source: {build.get('source_url', 'Unknown')}\n"
+                formatted_summary += f"  Strategy: {build.get('strategy_type', 'Unknown')}\n"
+                formatted_summary += f"  Created: {build.get('created_at', 'Unknown')}\n\n"
+        
+        raw_json = json.dumps(builds, indent=2, default=str)
+        
+        return [types.TextContent(
+            type="text",
+            text=f"{formatted_summary}\n\n**Raw JSON Data:**\n```json\n{raw_json}\n```"
+        )]
+    
+    except CodeEngineError as e:
+        return [types.TextContent(type="text", text=f"Code Engine API error: {str(e)}")]
+    except Exception as e:
+        return [types.TextContent(type="text", text=f"Unexpected error: {str(e)}")]
+
+async def handle_list_build_runs(arguments: dict) -> list[types.TextContent]:
+    """Handle list_build_runs tool call"""
+    try:
+        project_id = arguments.get('project_id')
+        build_name = arguments.get('build_name')
+        limit = arguments.get('limit', 100)
+        
+        build_runs = ce_client.list_build_runs(
+            project_id=project_id,
+            build_name=build_name,
+            limit=limit
+        )
+        
+        context = f" for build '{build_name}'" if build_name else ""
+        
+        if not build_runs:
+            formatted_summary = f"No build runs found{context} in project {project_id}."
+        else:
+            formatted_summary = f"Found {len(build_runs)} build runs{context} in project {project_id}:\n\n"
+            for run in build_runs:
+                formatted_summary += f"• **{run.get('name', 'Unknown')}**\n"
+                formatted_summary += f"  Status: {run.get('status', 'Unknown')}\n"
+                formatted_summary += f"  Build: {run.get('build_name', 'Unknown')}\n"
+                formatted_summary += f"  Created: {run.get('created_at', 'Unknown')}\n"
+                if run.get('output_image'):
+                    formatted_summary += f"  Image: {run.get('output_image')}\n"
+                formatted_summary += "\n"
+        
+        raw_json = json.dumps(build_runs, indent=2, default=str)
+        
+        return [types.TextContent(
+            type="text",
+            text=f"{formatted_summary}\n\n**Raw JSON Data:**\n```json\n{raw_json}\n```"
+        )]
+    
+    except CodeEngineError as e:
+        return [types.TextContent(type="text", text=f"Code Engine API error: {str(e)}")]
+    except Exception as e:
+        return [types.TextContent(type="text", text=f"Unexpected error: {str(e)}")]
+
+async def handle_find_project_by_name(arguments: dict) -> list[types.TextContent]:
+    """Handle find_project_by_name tool call"""
+    try:
+        project_name = arguments.get('project_name')
+        resource_group_id = arguments.get('resource_group_id')
+
+        logger.info(f"Finding project: {project_name}")
+        if resource_group_id:
+            logger.info(f"Filtering by resource group: {resource_group_id}")
+
+        project = ce_client.find_project_by_name(
+            project_name=project_name,
+            resource_group_id=resource_group_id
+        )
+
+        if not project:
+            rg_context = f" in resource group {resource_group_id}" if resource_group_id else ""
+            return [types.TextContent(
+                type="text",
+                text=f"Project '{project_name}' not found{rg_context}."
+            )]
+
+        # Format project details
+        formatted_summary = f"**Found Project: {project.get('name')}**\n\n"
+        formatted_summary += f"• **ID:** {project.get('id')}\n"
+        formatted_summary += f"• **Region:** {project.get('region', 'Unknown')}\n"
+        formatted_summary += f"• **Status:** {project.get('status', 'Unknown')}\n"
+        formatted_summary += f"• **Resource Group ID:** {project.get('resource_group_id', 'Unknown')}\n"
+        formatted_summary += f"• **Created:** {project.get('created_at', 'Unknown')}\n"
+
+        raw_json = json.dumps(project, indent=2, default=str)
+
+        return [types.TextContent(
+            type="text",
+            text=f"{formatted_summary}\n\n**Raw JSON Data:**\n```json\n{raw_json}\n```"
+        )]
+
+    except CodeEngineError as e:
+        return [types.TextContent(type="text", text=f"Code Engine API error: {str(e)}")]
+    except Exception as e:
+        return [types.TextContent(type="text", text=f"Unexpected error: {str(e)}")]
+
+async def handle_create_app_from_source(arguments: dict) -> list[types.TextContent]:
+    """Handle create_app_from_source tool call"""
+    try:
+        project_id = arguments.get('project_id')
+        app_name = arguments.get('app_name')
+        source_path = arguments.get('source_path', '.')
+        port = arguments.get('port', 8080)
+        image_name = arguments.get('image_name')
+        min_scale = arguments.get('min_scale', 1)
+        max_scale = arguments.get('max_scale', 10)
+        cpu_limit = arguments.get('cpu_limit', '0.5')
+        memory_limit = arguments.get('memory_limit', '4G')
+
+        logger.info(f"Creating app '{app_name}' from source: {source_path}")
+
+        app = ce_client.create_app_from_source(
+            project_id=project_id,
+            app_name=app_name,
+            source_path=source_path,
+            port=port,
+            image_name=image_name,
+            min_scale=min_scale,
+            max_scale=max_scale,
+            cpu_limit=cpu_limit,
+            memory_limit=memory_limit
+        )
+
+        # Format application details
+        formatted_summary = f"**✅ Application '{app_name}' created successfully!**\n\n"
+        formatted_summary += f"• **Name:** {app.get('name')}\n"
+        formatted_summary += f"• **Project ID:** {project_id}\n"
+        formatted_summary += f"• **Status:** {app.get('status', 'Building')}\n"
+
+        if app.get('endpoint'):
+            formatted_summary += f"• **🌐 Endpoint:** {app.get('endpoint')}\n"
+        else:
+            formatted_summary += f"• **Status:** Build in progress, endpoint will be available once deployment completes\n"
+
+        formatted_summary += f"• **Port:** {port}\n"
+        formatted_summary += f"• **Scale:** {min_scale}-{max_scale} instances\n"
+        formatted_summary += f"• **Resources:** {cpu_limit} CPU, {memory_limit} memory\n"
+
+        if image_name:
+            formatted_summary += f"• **Image:** {image_name}\n"
+
+        formatted_summary += f"\n**Note:** Code Engine is packaging source from '{source_path}', "
+        formatted_summary += "building the Docker image, and deploying the application. "
+        formatted_summary += "This may take a few minutes. Use `get_application` to check deployment status.\n"
+
+        raw_json = json.dumps(app, indent=2, default=str)
+
+        return [types.TextContent(
+            type="text",
+            text=f"{formatted_summary}\n\n**Raw JSON Data:**\n```json\n{raw_json}\n```"
+        )]
+
     except CodeEngineError as e:
         return [types.TextContent(type="text", text=f"Code Engine API error: {str(e)}")]
     except Exception as e:

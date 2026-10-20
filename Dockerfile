@@ -33,8 +33,8 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PIP_NO_CACHE_DIR=1
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Copy requirements first for better caching
-COPY --chown=mcpuser:mcpuser requirements.txt .
+# Copy production requirements first for better caching
+COPY --chown=mcpuser:mcpuser requirements/base.txt requirements.txt
 
 # Install Python dependencies as non-root user
 RUN pip install --user --no-cache-dir -r requirements.txt

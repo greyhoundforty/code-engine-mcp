@@ -9,17 +9,13 @@ from unittest.mock import patch, MagicMock
 import sys
 import os
 
+pytestmark = pytest.mark.asyncio
+
 # Add the parent directory to the path so we can import our modules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Import the server module - adjust the import if you renamed the file
-try:
-    from ce_mcp_server import server, handle_call_tool
-except ImportError:
-    try:
-        from ce_mcp_server_v2 import server, handle_call_tool
-    except ImportError:
-        pytest.skip("Server module could not be imported", allow_module_level=True)
+# Import the server module
+from ce_mcp_server_v3 import handle_call_tool, handle_list_tools  # noqa: E402
 
 @pytest.fixture
 def mock_ce_client():
@@ -56,26 +52,16 @@ def mock_ce_client():
     }
     return client
 
-@pytest.mark.asyncio
 async def test_list_tools():
     """Test that the server lists tools correctly"""
-    # Get the list_tools handler directly
-    list_tools_handler = None
-    for handler in server._handlers:
-        if handler.__name__ == "list_tools":
-            list_tools_handler = handler
-            break
-
-    assert list_tools_handler is not None, "list_tools handler not found"
-
-    # Call the handler
-    tools = await list_tools_handler()
+    # Call the list_tools handler via the registered handler
+    tools = await handle_list_tools()
 
     # Verify the result
     assert isinstance(tools, list)
-    assert len(tools) >= 3, "Should have at least 3 tools"
+    assert len(tools) == 22, "Should have exactly 22 tools"
 
-    # Check tool properties
+    # Check tool names
     tool_names = [tool.name for tool in tools]
     assert "list_projects" in tool_names
     assert "list_applications" in tool_names
@@ -88,11 +74,10 @@ async def test_list_tools():
         assert tool.description
         assert tool.inputSchema
 
-@pytest.mark.asyncio
 async def test_call_tool_list_projects(mock_ce_client):
     """Test list_projects tool call"""
     # Mock the ce_client global variable
-    with patch("ce_mcp_server.ce_client", mock_ce_client):
+    with patch("ce_mcp_server_v3.ce_client", mock_ce_client):
         # Call the handler
         result = await handle_call_tool("list_projects", {"limit": 10})
 
@@ -109,11 +94,10 @@ async def test_call_tool_list_projects(mock_ce_client):
         assert "test-project" in result[0].text
         assert "Raw JSON Data" in result[0].text
 
-@pytest.mark.asyncio
 async def test_call_tool_list_applications(mock_ce_client):
     """Test list_applications tool call"""
     # Mock the ce_client global variable
-    with patch("ce_mcp_server.ce_client", mock_ce_client):
+    with patch("ce_mcp_server_v3.ce_client", mock_ce_client):
         # Call the handler
         result = await handle_call_tool("list_applications", {
             "project_id": "project1",
@@ -134,11 +118,10 @@ async def test_call_tool_list_applications(mock_ce_client):
         assert "test-app" in result[0].text
         assert "Raw JSON Data" in result[0].text
 
-@pytest.mark.asyncio
 async def test_call_tool_get_application(mock_ce_client):
     """Test get_application tool call"""
     # Mock the ce_client global variable
-    with patch("ce_mcp_server.ce_client", mock_ce_client):
+    with patch("ce_mcp_server_v3.ce_client", mock_ce_client):
         # Call the handler
         result = await handle_call_tool("get_application", {
             "project_id": "project1",
@@ -155,14 +138,13 @@ async def test_call_tool_get_application(mock_ce_client):
         assert len(result) == 1
         assert isinstance(result[0], types.TextContent)
         assert result[0].type == "text"
-        assert "Application: test-app" in result[0].text
-        assert "Status: ready" in result[0].text
-        assert "Raw JSON Data" in result[0].text
+        assert "Application Details for test-app" in result[0].text
+        assert "Raw JSON Data" not in result[0].text  # get returns JSON directly
 
-@pytest.mark.asyncio
-async def test_call_tool_unknown():
+async def test_call_tool_unknown(mock_ce_client):
     """Test calling an unknown tool"""
-    result = await handle_call_tool("unknown_tool", {})
+    with patch("ce_mcp_server_v3.ce_client", mock_ce_client):
+        result = await handle_call_tool("unknown_tool", {})
 
     # Verify the response
     assert isinstance(result, list)
@@ -171,13 +153,12 @@ async def test_call_tool_unknown():
     assert result[0].type == "text"
     assert "Unknown tool: unknown_tool" in result[0].text
 
-@pytest.mark.asyncio
 async def test_call_tool_error(mock_ce_client):
     """Test error handling in tool call"""
     # Mock the ce_client global variable to raise an exception
     mock_ce_client.list_projects.side_effect = Exception("Test error")
 
-    with patch("ce_mcp_server.ce_client", mock_ce_client):
+    with patch("ce_mcp_server_v3.ce_client", mock_ce_client):
         # Call the handler
         result = await handle_call_tool("list_projects", {"limit": 10})
 
@@ -186,5 +167,5 @@ async def test_call_tool_error(mock_ce_client):
         assert len(result) == 1
         assert isinstance(result[0], types.TextContent)
         assert result[0].type == "text"
-        assert "Error" in result[0].text
+        assert "error" in result[0].text.lower()
         assert "Test error" in result[0].text

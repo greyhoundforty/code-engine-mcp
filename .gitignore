@@ -225,3 +225,5 @@ to-review/
 
 # Build artifacts
 bandit-report.json
+.DS_Store
+docs/

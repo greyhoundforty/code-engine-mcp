@@ -19,6 +19,9 @@ from utils import (  # noqa: E402
     format_jobs_summary,
     format_job_runs_summary,
     mask_sensitive_data,
+    format_config_maps_summary,
+    format_functions_summary,
+    format_bindings_summary,
 )
 
 # ---------------------------------------------------------------------------
@@ -275,3 +278,96 @@ def test_mask_sensitive_data_does_not_mutate_original():
     secret = {"name": "my-secret", "data": {"KEY": "original-value"}}
     mask_sensitive_data(secret)
     assert secret["data"]["KEY"] == "original-value"
+
+
+# ---------------------------------------------------------------------------
+# format_config_maps_summary
+# ---------------------------------------------------------------------------
+
+def test_format_config_maps_summary_with_data():
+    cms = [
+        {"name": "my-cm", "data": {"HOST": "db.example.com", "PORT": "5432"}, "created_at": "2025-01-01"},
+    ]
+    result = format_config_maps_summary(cms, project_id="proj1")
+    assert "1 configmap" in result
+    assert "my-cm" in result
+    assert "HOST" in result
+    assert "PORT" in result
+    assert "proj1" in result
+
+
+def test_format_config_maps_summary_empty():
+    result = format_config_maps_summary([], project_id="proj1")
+    assert "No configmaps" in result
+    assert "proj1" in result
+
+
+def test_format_config_maps_summary_no_data_field():
+    cms = [{"name": "empty-cm", "created_at": "2025-01-01"}]
+    result = format_config_maps_summary(cms)
+    assert "empty-cm" in result
+    assert "(empty)" in result
+
+
+# ---------------------------------------------------------------------------
+# format_functions_summary
+# ---------------------------------------------------------------------------
+
+def test_format_functions_summary_with_data():
+    functions = [
+        {
+            "name": "my-fn",
+            "runtime": "nodejs-20",
+            "status": "ready",
+            "endpoint": "https://my-fn.example.com",
+            "created_at": "2025-01-01",
+        }
+    ]
+    result = format_functions_summary(functions, project_id="proj1")
+    assert "1 function" in result
+    assert "my-fn" in result
+    assert "nodejs-20" in result
+    assert "ready" in result
+    assert "https://my-fn.example.com" in result
+
+
+def test_format_functions_summary_empty():
+    result = format_functions_summary([], project_id="proj1")
+    assert "No functions" in result
+    assert "proj1" in result
+
+
+def test_format_functions_summary_no_endpoint():
+    functions = [{"name": "fn-no-ep", "runtime": "python-3.11", "status": "ready", "created_at": "2025-01-01"}]
+    result = format_functions_summary(functions)
+    assert "fn-no-ep" in result
+    assert "python-3.11" in result
+
+
+# ---------------------------------------------------------------------------
+# format_bindings_summary
+# ---------------------------------------------------------------------------
+
+def test_format_bindings_summary_with_data():
+    bindings = [
+        {
+            "id": "binding-abc",
+            "component": {"name": "my-app", "resource_type": "app_v2"},
+            "prefix": "COS",
+            "secret_name": "my-cos-secret",  # pragma: allowlist secret
+            "status": "active",
+        }
+    ]
+    result = format_bindings_summary(bindings, project_id="proj1")
+    assert "1 service binding" in result
+    assert "binding-abc" in result
+    assert "my-app" in result
+    assert "app_v2" in result
+    assert "COS" in result
+    assert "my-cos-secret" in result
+
+
+def test_format_bindings_summary_empty():
+    result = format_bindings_summary([], project_id="proj1")
+    assert "No service bindings" in result
+    assert "proj1" in result

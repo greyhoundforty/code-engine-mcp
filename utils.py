@@ -80,7 +80,10 @@ from ibm_code_engine_sdk.code_engine_v2 import (
     DomainMappingsPager,
     SecretsPager,
     JobsPager,
-    JobRunsPager
+    JobRunsPager,
+    ConfigMapsPager,
+    FunctionsPager,
+    BindingsPager,
 )
 from ibm_cloud_sdk_core import ApiException
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
@@ -990,6 +993,278 @@ class CodeEngineClient:
             logger.error(f"Unexpected error creating application from source: {e}")
             raise CodeEngineError(f"Unexpected error: {e}")
 
+    # ------------------------------------------------------------------
+    # Config map management
+    # ------------------------------------------------------------------
+
+    def list_config_maps(self, project_id: str, limit: int = 100) -> List[Dict[str, Any]]:
+        """List configmaps in a project, handling pagination."""
+        try:
+            all_results = []
+            pager = ConfigMapsPager(client=self.service, project_id=project_id, limit=limit)
+            while pager.has_next():
+                next_page = pager.get_next()
+                if next_page is not None:
+                    all_results.extend(next_page)
+            logger.info(f"Retrieved {len(all_results)} configmaps for project {project_id}")
+            return all_results
+        except ApiException as e:
+            raise CodeEngineError(f"Failed to list configmaps: {e}")
+        except Exception as e:
+            raise CodeEngineError(f"Unexpected error: {e}")
+
+    def get_config_map(self, project_id: str, name: str) -> Dict[str, Any]:
+        """Get a configmap by name."""
+        try:
+            response = self.service.get_config_map(project_id=project_id, name=name)
+            return response.get_result()
+        except ApiException as e:
+            raise CodeEngineError(f"Failed to get configmap {name}: {e}")
+        except Exception as e:
+            raise CodeEngineError(f"Unexpected error: {e}")
+
+    def create_config_map(self, project_id: str, name: str, data: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+        """Create a configmap."""
+        try:
+            response = self.service.create_config_map(
+                project_id=project_id,
+                name=name,
+                data=data,
+            )
+            result = response.get_result()
+            logger.info(f"Created configmap {name} in project {project_id}")
+            return result
+        except ApiException as e:
+            raise CodeEngineError(f"Failed to create configmap {name}: {e}")
+        except Exception as e:
+            raise CodeEngineError(f"Unexpected error: {e}")
+
+    def replace_config_map(self, project_id: str, name: str, data: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+        """
+        Replace (full update) a configmap.
+
+        Automatically fetches the current ETag so the caller does not need to
+        manage it.
+        """
+        try:
+            get_response = self.service.get_config_map(project_id=project_id, name=name)
+            if_match = get_response.get_headers().get("ETag", "*")
+            response = self.service.replace_config_map(
+                project_id=project_id,
+                name=name,
+                if_match=if_match,
+                data=data,
+            )
+            result = response.get_result()
+            logger.info(f"Replaced configmap {name} in project {project_id}")
+            return result
+        except ApiException as e:
+            raise CodeEngineError(f"Failed to replace configmap {name}: {e}")
+        except Exception as e:
+            raise CodeEngineError(f"Unexpected error: {e}")
+
+    def delete_config_map(self, project_id: str, name: str) -> None:
+        """Delete a configmap."""
+        try:
+            self.service.delete_config_map(project_id=project_id, name=name)
+            logger.info(f"Deleted configmap {name} from project {project_id}")
+        except ApiException as e:
+            raise CodeEngineError(f"Failed to delete configmap {name}: {e}")
+        except Exception as e:
+            raise CodeEngineError(f"Unexpected error: {e}")
+
+    # ------------------------------------------------------------------
+    # Function management
+    # ------------------------------------------------------------------
+
+    def list_functions(self, project_id: str, limit: int = 100) -> List[Dict[str, Any]]:
+        """List functions in a project, handling pagination."""
+        try:
+            all_results = []
+            pager = FunctionsPager(client=self.service, project_id=project_id, limit=limit)
+            while pager.has_next():
+                next_page = pager.get_next()
+                if next_page is not None:
+                    all_results.extend(next_page)
+            logger.info(f"Retrieved {len(all_results)} functions for project {project_id}")
+            return all_results
+        except ApiException as e:
+            raise CodeEngineError(f"Failed to list functions: {e}")
+        except Exception as e:
+            raise CodeEngineError(f"Unexpected error: {e}")
+
+    def get_function(self, project_id: str, name: str) -> Dict[str, Any]:
+        """Get a function by name."""
+        try:
+            response = self.service.get_function(project_id=project_id, name=name)
+            return response.get_result()
+        except ApiException as e:
+            raise CodeEngineError(f"Failed to get function {name}: {e}")
+        except Exception as e:
+            raise CodeEngineError(f"Unexpected error: {e}")
+
+    def create_function(
+        self,
+        project_id: str,
+        name: str,
+        code_reference: str,
+        runtime: str,
+        **kwargs,
+    ) -> Dict[str, Any]:
+        """
+        Create a function.
+
+        Args:
+            project_id: Code Engine project ID.
+            name: Function name.
+            code_reference: Code bundle reference or container registry reference.
+            runtime: Runtime identifier (e.g. 'nodejs-20', 'python-3.11').
+            **kwargs: Optional SDK parameters such as scale_cpu_limit,
+                      scale_memory_limit, scale_max_execution_time, run_env_variables.
+        """
+        try:
+            response = self.service.create_function(
+                project_id=project_id,
+                name=name,
+                code_reference=code_reference,
+                runtime=runtime,
+                **kwargs,
+            )
+            result = response.get_result()
+            logger.info(f"Created function {name} in project {project_id}")
+            return result
+        except ApiException as e:
+            raise CodeEngineError(f"Failed to create function {name}: {e}")
+        except Exception as e:
+            raise CodeEngineError(f"Unexpected error: {e}")
+
+    def update_function(self, project_id: str, name: str, **kwargs) -> Dict[str, Any]:
+        """
+        Update a function.
+
+        Automatically fetches the current ETag so the caller does not need to
+        manage it.  Pass update fields as keyword arguments matching the SDK
+        FunctionPatch model (e.g. runtime, scale_cpu_limit, run_env_variables).
+        """
+        try:
+            from ibm_code_engine_sdk.code_engine_v2 import FunctionPatch
+            get_response = self.service.get_function(project_id=project_id, name=name)
+            if_match = get_response.get_headers().get("ETag", "*")
+            patch = FunctionPatch(**kwargs)
+            response = self.service.update_function(
+                project_id=project_id,
+                name=name,
+                if_match=if_match,
+                function=patch.to_dict(),
+            )
+            result = response.get_result()
+            logger.info(f"Updated function {name} in project {project_id}")
+            return result
+        except ApiException as e:
+            raise CodeEngineError(f"Failed to update function {name}: {e}")
+        except Exception as e:
+            raise CodeEngineError(f"Unexpected error: {e}")
+
+    def delete_function(self, project_id: str, name: str) -> None:
+        """Delete a function."""
+        try:
+            self.service.delete_function(project_id=project_id, name=name)
+            logger.info(f"Deleted function {name} from project {project_id}")
+        except ApiException as e:
+            raise CodeEngineError(f"Failed to delete function {name}: {e}")
+        except Exception as e:
+            raise CodeEngineError(f"Unexpected error: {e}")
+
+    def list_function_runtimes(self) -> List[Dict[str, Any]]:
+        """List available managed function runtimes."""
+        try:
+            response = self.service.list_function_runtimes()
+            return response.get_result().get("function_runtimes", [])
+        except ApiException as e:
+            raise CodeEngineError(f"Failed to list function runtimes: {e}")
+        except Exception as e:
+            raise CodeEngineError(f"Unexpected error: {e}")
+
+    # ------------------------------------------------------------------
+    # Service binding management
+    # ------------------------------------------------------------------
+
+    def list_bindings(self, project_id: str, limit: int = 100) -> List[Dict[str, Any]]:
+        """List service bindings in a project."""
+        try:
+            all_results = []
+            pager = BindingsPager(client=self.service, project_id=project_id, limit=limit)
+            while pager.has_next():
+                next_page = pager.get_next()
+                if next_page is not None:
+                    all_results.extend(next_page)
+            logger.info(f"Retrieved {len(all_results)} bindings for project {project_id}")
+            return all_results
+        except ApiException as e:
+            raise CodeEngineError(f"Failed to list bindings: {e}")
+        except Exception as e:
+            raise CodeEngineError(f"Unexpected error: {e}")
+
+    def get_binding(self, project_id: str, binding_id: str) -> Dict[str, Any]:
+        """Get a service binding by ID."""
+        try:
+            response = self.service.get_binding(project_id=project_id, id=binding_id)
+            return response.get_result()
+        except ApiException as e:
+            raise CodeEngineError(f"Failed to get binding {binding_id}: {e}")
+        except Exception as e:
+            raise CodeEngineError(f"Unexpected error: {e}")
+
+    def create_binding(
+        self,
+        project_id: str,
+        component_name: str,
+        component_resource_type: str,
+        prefix: str,
+        secret_name: str,
+    ) -> Dict[str, Any]:
+        """
+        Create a service binding.
+
+        Args:
+            project_id: Code Engine project ID.
+            component_name: Name of the app, job, or function to bind to.
+            component_resource_type: Resource type: 'app_v2', 'job_v2', or 'function_v2'.
+            prefix: Environment variable prefix for the binding credentials.
+            secret_name: Name of the existing service credential secret.
+        """
+        try:
+            from ibm_code_engine_sdk.code_engine_v2 import ComponentRef
+            component = ComponentRef(
+                name=component_name,
+                resource_type=component_resource_type,
+            )
+            response = self.service.create_binding(
+                project_id=project_id,
+                component=component,
+                prefix=prefix,
+                secret_name=secret_name,
+            )
+            result = response.get_result()
+            logger.info(f"Created binding for {component_name} in project {project_id}")
+            return result
+        except ApiException as e:
+            raise CodeEngineError(f"Failed to create binding: {e}")
+        except Exception as e:
+            raise CodeEngineError(f"Unexpected error: {e}")
+
+    def delete_binding(self, project_id: str, binding_id: str) -> None:
+        """Delete a service binding."""
+        try:
+            self.service.delete_binding(project_id=project_id, id=binding_id)
+            logger.info(f"Deleted binding {binding_id} from project {project_id}")
+        except ApiException as e:
+            raise CodeEngineError(f"Failed to delete binding {binding_id}: {e}")
+        except Exception as e:
+            raise CodeEngineError(f"Unexpected error: {e}")
+
+
+
 
 def create_code_engine_client(api_key: Optional[str] = None, region: str = "us-south") -> CodeEngineClient:
     """
@@ -1320,4 +1595,56 @@ def format_build_runs_summary(build_runs: List[Dict[str, Any]], build_name: str 
             summary += f"  Image: {run.get('output_image')}\n"
         summary += "\n"
 
+    return summary
+
+
+def format_config_maps_summary(config_maps: List[Dict[str, Any]], project_id: str = "") -> str:
+    """Format configmaps list for display."""
+    if not config_maps:
+        context = f" in project {project_id}" if project_id else ""
+        return f"No configmaps found{context}."
+
+    context = f" in project {project_id}" if project_id else ""
+    summary = f"Found {len(config_maps)} configmap(s){context}:\n\n"
+    for cm in config_maps:
+        summary += f"• **{cm.get('name', 'Unknown')}**\n"
+        data = cm.get("data") or {}
+        summary += f"  Keys: {', '.join(data.keys()) if data else '(empty)'}\n"
+        summary += f"  Created: {cm.get('created_at', 'Unknown')}\n\n"
+    return summary
+
+
+def format_functions_summary(functions: List[Dict[str, Any]], project_id: str = "") -> str:
+    """Format functions list for display."""
+    if not functions:
+        context = f" in project {project_id}" if project_id else ""
+        return f"No functions found{context}."
+
+    context = f" in project {project_id}" if project_id else ""
+    summary = f"Found {len(functions)} function(s){context}:\n\n"
+    for fn in functions:
+        summary += f"• **{fn.get('name', 'Unknown')}**\n"
+        summary += f"  Runtime: {fn.get('runtime', 'Unknown')}\n"
+        summary += f"  Status: {fn.get('status', 'Unknown')}\n"
+        if fn.get("endpoint"):
+            summary += f"  Endpoint: {fn.get('endpoint')}\n"
+        summary += f"  Created: {fn.get('created_at', 'Unknown')}\n\n"
+    return summary
+
+
+def format_bindings_summary(bindings: List[Dict[str, Any]], project_id: str = "") -> str:
+    """Format service bindings list for display."""
+    if not bindings:
+        context = f" in project {project_id}" if project_id else ""
+        return f"No service bindings found{context}."
+
+    context = f" in project {project_id}" if project_id else ""
+    summary = f"Found {len(bindings)} service binding(s){context}:\n\n"
+    for b in bindings:
+        component = b.get("component") or {}
+        summary += f"• **{b.get('id', 'Unknown')}**\n"
+        summary += f"  Component: {component.get('name', 'Unknown')} ({component.get('resource_type', 'Unknown')})\n"
+        summary += f"  Prefix: {b.get('prefix', 'Unknown')}\n"
+        summary += f"  Secret: {b.get('secret_name', 'Unknown')}\n"
+        summary += f"  Status: {b.get('status', 'Unknown')}\n\n"
     return summary

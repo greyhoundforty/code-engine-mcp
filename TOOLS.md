@@ -10,6 +10,9 @@ This document provides comprehensive documentation for all tools available in th
 - [Job Management](#job-management) (4 tools)
 - [Domain Management](#domain-management) (2 tools)
 - [Secret Management](#secret-management) (2 tools)
+- [Configmap Management](#configmap-management) (5 tools)
+- [Function Management](#function-management) (6 tools)
+- [Service Binding Management](#service-binding-management) (4 tools)
 
 ---
 
@@ -639,3 +642,307 @@ Error responses include:
 - [Code Engine CLI Reference](https://cloud.ibm.com/docs/codeengine?topic=codeengine-cli)
 - [IBM Container Registry](https://cloud.ibm.com/docs/Registry)
 - [Example Applications](examples/)
+
+---
+
+## Configmap Management
+
+### `list_config_maps`
+
+List all configmaps in a Code Engine project.
+
+**Parameters:**
+- `project_id` (string, **required**): Code Engine project ID
+- `limit` (integer, optional): Maximum number to return. Default: 100
+
+**Example:**
+```
+"List configmaps in project abc123"
+"Show all configmaps in my project"
+```
+
+**Returns:**
+- Formatted summary of configmaps with names, key counts, and creation dates
+- Raw JSON data
+
+---
+
+### `get_config_map`
+
+Get all key-value pairs in a specific configmap.
+
+**Parameters:**
+- `project_id` (string, **required**): Code Engine project ID
+- `name` (string, **required**): Configmap name
+
+**Example:**
+```
+"Get configmap app-config in project abc123"
+"Show me the values in my-configmap"
+```
+
+**Returns:**
+- Full configmap details including all key-value pairs
+
+---
+
+### `create_config_map`
+
+Create a new configmap in a Code Engine project.
+
+**Parameters:**
+- `project_id` (string, **required**): Code Engine project ID
+- `name` (string, **required**): Configmap name (must be unique within the project)
+- `data` (object, optional): Key-value pairs to store (all values must be strings)
+
+**Example:**
+```
+"Create configmap app-config with HOST=db.example.com and PORT=5432"
+"Create an empty configmap named feature-flags"
+```
+
+**Returns:**
+- Created configmap details
+
+---
+
+### `update_config_map`
+
+Replace all key-value pairs in a configmap (full replacement). Any keys not included in `data` will be removed.
+
+**Parameters:**
+- `project_id` (string, **required**): Code Engine project ID
+- `name` (string, **required**): Configmap name
+- `data` (object, optional): New key-value pairs (replaces all existing entries)
+
+**Example:**
+```
+"Update configmap app-config with new values HOST=prod.example.com PORT=5432"
+"Replace all keys in my-configmap with {DEBUG: false}"
+```
+
+**Returns:**
+- Updated configmap details
+
+---
+
+### `delete_config_map`
+
+Delete a configmap from a Code Engine project.
+
+**Parameters:**
+- `project_id` (string, **required**): Code Engine project ID
+- `name` (string, **required**): Configmap name
+
+**Example:**
+```
+"Delete configmap app-config from project abc123"
+```
+
+**Returns:**
+- Confirmation message
+
+---
+
+## Function Management
+
+### `list_functions`
+
+List all serverless functions in a Code Engine project.
+
+**Parameters:**
+- `project_id` (string, **required**): Code Engine project ID
+- `limit` (integer, optional): Maximum number to return. Default: 100
+
+**Example:**
+```
+"List functions in project abc123"
+"Show all serverless functions"
+```
+
+**Returns:**
+- Formatted summary with function names, runtimes, status, and endpoints
+- Raw JSON data
+
+---
+
+### `get_function`
+
+Get details of a specific serverless function.
+
+**Parameters:**
+- `project_id` (string, **required**): Code Engine project ID
+- `name` (string, **required**): Function name
+
+**Example:**
+```
+"Get function my-handler in project abc123"
+```
+
+**Returns:**
+- Full function details including runtime, endpoint, scaling config, environment variables
+
+---
+
+### `create_function`
+
+Create a new serverless function. Use `list_function_runtimes` to see available runtime values.
+
+**Parameters:**
+- `project_id` (string, **required**): Code Engine project ID
+- `name` (string, **required**): Function name (unique within project)
+- `code_reference` (string, **required**): Container registry image reference or inline code bundle data URL
+- `runtime` (string, **required**): Managed runtime identifier (e.g. `nodejs-20`, `python-3.11`)
+- `scale_cpu_limit` (string, optional): CPU limit, e.g. `"0.25"`, `"0.5"`, `"1"`. Default: `"0.25"`
+- `scale_memory_limit` (string, optional): Memory limit, e.g. `"256M"`, `"512M"`, `"1G"`. Default: `"1G"`
+- `scale_max_execution_time` (integer, optional): Max execution time in seconds (max 120). Default: 60
+- `managed_domain_mappings` (string, optional): Endpoint visibility: `"local"`, `"local_public"`, or `"local_private"`
+- `run_env_variables` (array, optional): Environment variables as `[{name, value}]` objects
+
+**Example:**
+```
+"Create a Node.js 20 function named my-handler with image icr.io/ns/fn:latest"
+"Deploy a Python 3.11 function with 512M memory and 30-second timeout"
+```
+
+**Returns:**
+- Created function details including endpoint URL
+
+---
+
+### `update_function`
+
+Update configuration of an existing serverless function. Automatically handles ETag concurrency control.
+
+**Parameters:**
+- `project_id` (string, **required**): Code Engine project ID
+- `name` (string, **required**): Function name
+- `runtime` (string, optional): New runtime identifier
+- `code_reference` (string, optional): New code reference
+- `scale_cpu_limit` (string, optional): New CPU limit
+- `scale_memory_limit` (string, optional): New memory limit
+- `scale_max_execution_time` (integer, optional): New max execution time in seconds
+- `managed_domain_mappings` (string, optional): New endpoint visibility
+- `run_env_variables` (array, optional): New environment variables
+
+**Example:**
+```
+"Update function my-handler to use nodejs-22 runtime"
+"Increase memory for my-handler to 512M"
+```
+
+**Returns:**
+- Updated function details
+
+---
+
+### `delete_function`
+
+Delete a serverless function from a Code Engine project.
+
+**Parameters:**
+- `project_id` (string, **required**): Code Engine project ID
+- `name` (string, **required**): Function name
+
+**Example:**
+```
+"Delete function my-handler from project abc123"
+```
+
+**Returns:**
+- Confirmation message
+
+---
+
+### `list_function_runtimes`
+
+List all available managed runtimes for Code Engine functions. No parameters required.
+
+**Example:**
+```
+"What function runtimes are available?"
+"List available Code Engine function runtimes"
+```
+
+**Returns:**
+- List of available runtime identifiers (e.g. `nodejs-20`, `nodejs-22`, `nodejs-24`, `python-3.11`, `python-3.13`)
+
+---
+
+## Service Binding Management
+
+### `list_bindings`
+
+List all service bindings in a Code Engine project.
+
+**Parameters:**
+- `project_id` (string, **required**): Code Engine project ID
+- `limit` (integer, optional): Maximum number to return. Default: 100
+
+**Example:**
+```
+"List service bindings in project abc123"
+"Show all bindings in my project"
+```
+
+**Returns:**
+- Formatted summary with binding IDs, bound component, prefix, and status
+- Raw JSON data
+
+---
+
+### `get_binding`
+
+Get details of a specific service binding.
+
+**Parameters:**
+- `project_id` (string, **required**): Code Engine project ID
+- `binding_id` (string, **required**): Service binding ID (from `list_bindings`)
+
+**Example:**
+```
+"Get binding bind-abc in project abc123"
+```
+
+**Returns:**
+- Full binding details including component, prefix, secret name, and status
+
+---
+
+### `create_binding`
+
+Bind an IBM Cloud service instance to a Code Engine app, job, or function. The service credentials are injected as environment variables with the specified prefix. Requires an existing service credential secret in the project.
+
+**Parameters:**
+- `project_id` (string, **required**): Code Engine project ID
+- `component_name` (string, **required**): Name of the app, job, or function to bind to
+- `component_resource_type` (string, **required**): Resource type — `"app_v2"`, `"job_v2"`, or `"function_v2"`
+- `prefix` (string, **required**): Environment variable prefix (e.g. `"COS"` → variables like `COS_APIKEY`, `COS_URL`)
+- `secret_name` (string, **required**): Name of the existing service credential secret in the project
+
+**Example:**
+```
+"Bind COS service to app my-app using secret cos-credentials with prefix COS"
+"Create a service binding for job my-job to use the Watson NLU service"
+```
+
+**Returns:**
+- Created binding details including binding ID
+
+---
+
+### `delete_binding`
+
+Delete a service binding from a Code Engine project.
+
+**Parameters:**
+- `project_id` (string, **required**): Code Engine project ID
+- `binding_id` (string, **required**): Service binding ID
+
+**Example:**
+```
+"Delete binding bind-abc from project abc123"
+```
+
+**Returns:**
+- Confirmation message

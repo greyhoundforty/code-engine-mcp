@@ -180,11 +180,26 @@ All tools return formatted summaries and raw JSON for flexibility.
 
 ```
 code-engine-mcp/
-├── ce_mcp_server_v3.py      # MCP server implementation (22 tools)
-├── ce_push.py                # Build-source deployment CLI
-├── utils.py                  # Code Engine SDK wrapper
+├── server.py                 # MCP server entry point (~75 lines)
+├── tools/                    # Tool registry — one file per resource category
+│   ├── __init__.py           # Triggers registration of all 22 tools
+│   ├── base.py               # ToolDefinition dataclass
+│   ├── registry.py           # register(), get_all(), dispatch()
+│   ├── projects.py           # list_projects, find_project_by_name
+│   ├── applications.py       # 7 application tools
+│   ├── builds.py             # 5 build tools
+│   ├── jobs.py               # 4 job tools
+│   ├── domains.py            # list/get domain mappings
+│   └── secrets.py            # list/get secrets
+├── utils.py                  # CodeEngineClient SDK wrapper + formatters
+├── ce_push.py                # Build-source deployment CLI (standalone)
 ├── Dockerfile                # Container definition
-├── requirements.txt          # Python dependencies
+├── requirements/
+│   ├── base.txt              # Production dependencies (used in Docker)
+│   └── dev.txt               # Dev/CI dependencies (testing, linting)
+├── tests/
+│   ├── test_server.py        # Registry and dispatch tests
+│   └── test_formatters.py    # Formatter unit tests
 ├── README.md                 # This file
 ├── TOOLS.md                  # Detailed tool documentation
 └── examples/
@@ -198,7 +213,17 @@ code-engine-mcp/
 
 ```bash
 export IBMCLOUD_API_KEY=your-api-key
-python ce_mcp_server_v3.py
+python server.py
+```
+
+### Run Tests
+
+```bash
+# Install dev dependencies
+uv pip install -r requirements/dev.txt
+
+# Run all tests
+pytest tests/ -v
 ```
 
 ### Rebuild Docker Image
@@ -271,14 +296,20 @@ Claude Desktop/Code
       ↓
 Natural Language Command
       ↓
-MCP Server (Docker)
+server.py  (MCP wiring — stdio transport)
+      ↓
+tools/registry.py  (dispatch by tool name)
+      ↓
+tools/<domain>.py  (handler + schema per tool)
+      ↓
+utils.py  (CodeEngineClient SDK wrapper)
       ↓
 IBM Code Engine API
       ↓
 Your Application (deployed)
 ```
 
-The MCP server translates natural language into Code Engine API calls, handling authentication, error handling, and response formatting.
+The server translates natural language into Code Engine API calls. Each of the 22 tools is defined in a single place: its domain module in `tools/` holds the JSON schema, the handler function, and the `register()` call. Adding a new tool means adding one file — no dispatch chain to update.
 
 ## Additional Resources
 
@@ -296,7 +327,8 @@ MIT License - See LICENSE file for details
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+3. Make your changes — add new tools in `tools/<domain>.py`
+4. Run the test suite: `pytest tests/ -v`
+5. Submit a pull request
 
-Ensure all tests pass and code follows existing style.
+All tests must pass and code must satisfy the pre-commit hooks (ruff, trailing whitespace, secret scanning) before merging.

@@ -40,8 +40,10 @@ COPY --chown=mcpuser:mcpuser requirements/base.txt requirements.txt
 RUN pip install --user --no-cache-dir -r requirements.txt
 
 # Copy application code
+COPY --chown=mcpuser:mcpuser server.py .
 COPY --chown=mcpuser:mcpuser ce_mcp_server_v3.py .
 COPY --chown=mcpuser:mcpuser utils.py .
+COPY --chown=mcpuser:mcpuser tools/ tools/
 
 # Add health check script
 COPY --chown=mcpuser:mcpuser healthcheck.py .
@@ -49,7 +51,7 @@ COPY --chown=mcpuser:mcpuser healthcheck.py .
 # Set environment variables
 ENV MCP_SERVER_NAME="ibm-code-engine-mcp"
 ENV LOG_LEVEL="INFO"
-ENV MCP_SERVER_FILE="ce_mcp_server_v3.py"
+ENV MCP_SERVER_FILE="server.py"
 
 # Add health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

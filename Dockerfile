@@ -41,7 +41,6 @@ RUN pip install --user --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY --chown=mcpuser:mcpuser server.py .
-COPY --chown=mcpuser:mcpuser ce_mcp_server_v3.py .
 COPY --chown=mcpuser:mcpuser utils.py .
 COPY --chown=mcpuser:mcpuser tools/ tools/
 

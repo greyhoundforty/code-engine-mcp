@@ -85,9 +85,14 @@ from utils import (
     CodeEngineError,
     format_project_summary,
     format_apps_summary,
+    format_app_revisions_summary,
+    format_domain_mappings_summary,
+    format_secrets_summary,
+    format_builds_summary,
+    format_build_runs_summary,
     format_jobs_summary,
     format_job_runs_summary,
-    mask_sensitive_data
+    mask_sensitive_data,
 )
 
 # Configure logging
@@ -832,19 +837,7 @@ async def handle_list_app_revisions(arguments: dict) -> list[types.TextContent]:
         limit = arguments.get('limit', 100)
         revisions = ce_client.list_app_revisions(project_id=project_id, app_name=app_name, limit=limit)
 
-        # Format summary
-        if not revisions:
-            formatted_summary = f"No revisions found for application {app_name} in project {project_id}."
-        else:
-            formatted_summary = f"Found {len(revisions)} revisions for application {app_name}:\n\n"
-            for revision in revisions:
-                formatted_summary += f"• **{revision.get('name', 'Unknown')}**\n"
-                formatted_summary += f"  Status: {revision.get('status', 'Unknown')}\n"
-                formatted_summary += f"  Created: {revision.get('created_at', 'Unknown')}\n"
-                if revision.get('scale_config'):
-                    scale = revision.get('scale_config', {})
-                    formatted_summary += f"  Scale: {scale.get('min_scale', 0)}-{scale.get('max_scale', 1)} instances\n"
-                formatted_summary += "\n"
+        formatted_summary = format_app_revisions_summary(revisions, app_name=app_name, project_id=project_id)
 
         raw_json = json.dumps(revisions, indent=2, default=str)
 
@@ -885,19 +878,7 @@ async def handle_list_domain_mappings(arguments: dict) -> list[types.TextContent
         limit = arguments.get('limit', 100)
         domain_mappings = ce_client.list_domain_mappings(project_id=project_id, limit=limit)
 
-        # Format summary
-        if not domain_mappings:
-            formatted_summary = f"No domain mappings found in project {project_id}."
-        else:
-            formatted_summary = f"Found {len(domain_mappings)} domain mappings in project {project_id}:\n\n"
-            for mapping in domain_mappings:
-                formatted_summary += f"• **{mapping.get('name', 'Unknown')}**\n"
-                formatted_summary += f"  Status: {mapping.get('status', 'Unknown')}\n"
-                formatted_summary += f"  Created: {mapping.get('created_at', 'Unknown')}\n"
-                if mapping.get('target'):
-                    target = mapping.get('target', {})
-                    formatted_summary += f"  Target: {target.get('type', 'Unknown')} - {target.get('name', 'Unknown')}\n"
-                formatted_summary += "\n"
+        formatted_summary = format_domain_mappings_summary(domain_mappings, project_id=project_id)
 
         raw_json = json.dumps(domain_mappings, indent=2, default=str)
 
@@ -1016,22 +997,9 @@ async def handle_list_secrets(arguments: dict) -> list[types.TextContent]:
         limit = arguments.get('limit', 100)
         secrets = ce_client.list_secrets(project_id=project_id, limit=limit)
 
-        # Mask sensitive data
+        # Mask sensitive data before formatting
         masked_secrets = [mask_sensitive_data(secret) for secret in secrets]
-
-        # Format summary
-        if not masked_secrets:
-            formatted_summary = f"No secrets found in project {project_id}."
-        else:
-            formatted_summary = f"Found {len(masked_secrets)} secrets in project {project_id}:\n\n"
-            for secret in masked_secrets:
-                formatted_summary += f"• **{secret.get('name', 'Unknown')}**\n"
-                formatted_summary += f"  Type: {secret.get('format', 'Unknown')}\n"
-                formatted_summary += f"  Created: {secret.get('created_at', 'Unknown')}\n"
-                if secret.get('data'):
-                    data_keys = list(secret['data'].keys())
-                    formatted_summary += f"  Keys: {', '.join(data_keys)}\n"
-                formatted_summary += "\n"
+        formatted_summary = format_secrets_summary(masked_secrets, project_id=project_id)
 
         raw_json = json.dumps(masked_secrets, indent=2, default=str)
 
@@ -1267,16 +1235,7 @@ async def handle_list_builds(arguments: dict) -> list[types.TextContent]:
 
         builds = ce_client.list_builds(project_id=project_id, limit=limit)
 
-        if not builds:
-            formatted_summary = f"No build configurations found in project {project_id}."
-        else:
-            formatted_summary = f"Found {len(builds)} build configurations in project {project_id}:\n\n"
-            for build in builds:
-                formatted_summary += f"• **{build.get('name', 'Unknown')}**\n"
-                formatted_summary += f"  Output: {build.get('output_image', 'Unknown')}\n"
-                formatted_summary += f"  Source: {build.get('source_url', 'Unknown')}\n"
-                formatted_summary += f"  Strategy: {build.get('strategy_type', 'Unknown')}\n"
-                formatted_summary += f"  Created: {build.get('created_at', 'Unknown')}\n\n"
+        formatted_summary = format_builds_summary(builds, project_id=project_id)
 
         raw_json = json.dumps(builds, indent=2, default=str)
 
@@ -1303,20 +1262,7 @@ async def handle_list_build_runs(arguments: dict) -> list[types.TextContent]:
             limit=limit
         )
 
-        context = f" for build '{build_name}'" if build_name else ""
-
-        if not build_runs:
-            formatted_summary = f"No build runs found{context} in project {project_id}."
-        else:
-            formatted_summary = f"Found {len(build_runs)} build runs{context} in project {project_id}:\n\n"
-            for run in build_runs:
-                formatted_summary += f"• **{run.get('name', 'Unknown')}**\n"
-                formatted_summary += f"  Status: {run.get('status', 'Unknown')}\n"
-                formatted_summary += f"  Build: {run.get('build_name', 'Unknown')}\n"
-                formatted_summary += f"  Created: {run.get('created_at', 'Unknown')}\n"
-                if run.get('output_image'):
-                    formatted_summary += f"  Image: {run.get('output_image')}\n"
-                formatted_summary += "\n"
+        formatted_summary = format_build_runs_summary(build_runs, build_name=build_name or "", project_id=project_id)
 
         raw_json = json.dumps(build_runs, indent=2, default=str)
 
